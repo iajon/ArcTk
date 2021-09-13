@@ -182,6 +182,7 @@ class ActiveBox(ttk.LabelFrame):
 
         # Update other active box view
         self.em.refresh("small_active_box_frame")
+        self.em.refresh("box_treeview")
 
         self.refresh()
 
@@ -208,9 +209,6 @@ class ActiveBox(ttk.LabelFrame):
     def enable(self):
         for i in self.entry_ls[2:]:
             i['state'] = 'enabled'
-
-    def refresh(self):
-        self.init_widgets()
 
 class SmallActiveBox(ttk.LabelFrame):
     def __init__(self, parent, app, text = "Active Box"):
@@ -292,7 +290,7 @@ class SmallActiveBox(ttk.LabelFrame):
                 i.delete(0, tk.END)
                 i.insert(0, str(j))
         except:
-            print("Failed - 2")
+            print("FAILED: fill_labels - small_active_box")
         # Disable entries
         self.disable()
         

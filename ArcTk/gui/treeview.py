@@ -201,7 +201,8 @@ class BoxView(ttk.Treeview):
         return self.index
 
     def refresh(self):
-        self.update()
+        self.wipe()
+        self.load()
 
     # Wipe treeview
     def wipe(self):
