@@ -5,6 +5,8 @@ from tkinter import ttk
 from itertools import chain
 
 from lib.Classes import Box, Bag, Artifact
+import lib.GeneralFunctions as gf
+import lib.HtmlFunctions as hf
 
 class BoxEntryWindow(tk.Tk):
     def __init__(self, app):
@@ -313,20 +315,6 @@ class ExportBoxWindow(tk.Tk):
         self.export_button.grid(row=1, column=0, columnspan = 3, padx = 10, pady = (10, 10), sticky="nsew")
 
     def export_box(self):
-        if (self.excel_var.get()):
-            self.export_to_excel()
-        if (self.html_var.get()):
-            self.export_to_html()
-        if (self.pdf_var.get()):
-            self.export_to_pdf()
-    
-    def export_to_excel():
-        pass
-
-    def export_to_html():
-        pass
-
-    def export_to_pdf(self):
         selection = self.con.get_box_for_export()
 
         # Begin filtering
@@ -335,7 +323,6 @@ class ExportBoxWindow(tk.Tk):
         bag_data = []
         for row in selection:
             bag_data.append(list(row[10:]))
-
 
         # Create a list of bags
         bag_ls = []
@@ -348,14 +335,9 @@ class ExportBoxWindow(tk.Tk):
                     'date': '',
                     'artifact_ls': []}
 
-        artifact_props = {'ARTIFACT_TYPE': '',
-                        'ARTIFACT_COUNT': '',
-                        'ARTIFACT_WEIGHT': ''}
-
         current_id = 0
         flag = False
         for row in bag_data:
-
             # If new bag id
             if current_id != row[-1]:
                 if flag == False:
@@ -383,6 +365,10 @@ class ExportBoxWindow(tk.Tk):
         bag_props['artifact_ls'] = artifact_ls
         bag_ls.append(Bag(**bag_props.copy()))
 
+        # Prep for output
+        sitenum = box_data[0]
+        invnum = box_data[2]
+
         # Uncomment to print list of bags
         """
         for i in bag_ls:
@@ -391,11 +377,35 @@ class ExportBoxWindow(tk.Tk):
                 print(x.__dict__)
         """
 
-        # Prep for pdf output
-        sitenum = box_data[0]
-        invnum = box_data[2]
+        if (self.excel_var.get()):
+            self.export_to_excel(bag_ls, sitenum, invnum)
+        if (self.html_var.get()):
+            self.export_to_html(bag_ls, sitenum, invnum)
+        if (self.pdf_var.get()):
+            self.export_to_pdf(bag_ls, sitenum, invnum)
+    
+    def export_to_excel(self, bag_ls, site, inv):
+        pass
 
-        file_1 = PdfFile(bag_ls, sitenum, invnum)
+    def export_to_html(self, bag_ls, site, inv):
+        cat_ls = gf.get_cat_nums(bag_ls)
+        for i in range(len(cat_ls)):
+            cat_ls[i] += ';'
+
+        prov_ls = gf.get_prov_ls(bag_ls)
+        for i in range(len(prov_ls)):
+            prov_ls[i] += ';'
+
+        if (len(inv) > 0):
+            filename = f"{site}_{inv}"
+        else:
+            filename = f"{site}_001"
+
+        hf.write_html(filename, site, inv, prov_ls, cat_ls)
+
+    def export_to_pdf(self, bag_ls, site, inv):
+
+        file_1 = PdfFile(bag_ls, site, inv)
 
                 
 
