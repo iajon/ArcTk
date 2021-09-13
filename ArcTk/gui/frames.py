@@ -345,7 +345,6 @@ class BagTree(ttk.Frame):
         self.scrollbar.pack(side="right", fill="y")
         self.bag_treeview.pack(side="bottom")
     
-
 class BagEntry(ttk.LabelFrame):
     def __init__(self, parent, app, text = "Bag Information"):
         super().__init__(parent, text = text)
@@ -546,8 +545,6 @@ class CardPreview(ttk.LabelFrame):
         self.em = app.event_manager
         self.con = app.connection
 
-        
-
         self.init_widgets()
 
     def init_widgets(self):
@@ -694,7 +691,7 @@ class SubmitButton(ttk.LabelFrame):
         if len(ls[1]) == 0:
             artifact_ls.append(Artifact(**{'ARTIFACT_TYPE': 'EMPTY', 'ARTIFACT_COUNT': 0, 'ARTIFACT_WEIGHT': 0}))
         elif len(ls[1]) == 1:
-            artifact_ls.append(Artifact(**ls[1]))
+            artifact_ls.append(Artifact(**ls[1][0]))
         else:
             for i in ls[1]:
                 artifact_ls.append(Artifact(**i))
