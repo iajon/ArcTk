@@ -200,7 +200,7 @@ class Card:
     # Returns list with formatted prefixes
     def dict_to_ls(self, dictionary):
         temp_ls = []
-        temp_ls_2 = ['Site:                       ']
+        temp_ls_2 = []
 
         dictionary.pop('BAG_INDEX', None)
         for k, v in dictionary.items():
@@ -209,7 +209,6 @@ class Card:
                 temp_ls.append("%s %s" % (self.format_prefix(k), v))
                 if temp_ls[-1][-1] != ';':
                     temp_ls[-1]+= ';'
-        temp_ls.insert(0, 'Site:  23FR170')
         return [temp_ls, temp_ls_2]
 
     #Returns formatted card label prefix string according to character limit + colon 

@@ -1,8 +1,8 @@
+from lib.PdfFunctions import PdfFile
 import tkinter as tk
 from tkinter import ttk
 
 from itertools import chain
-import time
 
 from lib.Classes import Box, Bag, Artifact
 
@@ -253,12 +253,22 @@ class ExportBoxWindow(tk.Tk):
         self.site_num = ttk.Label(self.frame, text="Site Name")
         self.oin = ttk.Label(self.frame, text="Old Inventory Number(s)")
 
-        self.bag_count = ttk.Label(self.frame, text="Bag Total: 100 Bags")
+        self.bag_count = ttk.Label(self.frame, text=f"Bag Total: {self.con.get_count()} Bags")
         self.page_count = ttk.Label(self.frame, text="Page Total: 5 Pages")
 
         # Entries
         self.site_num_entry = ttk.Entry(self.frame)
         self.oin_entry = ttk.Entry(self.frame)
+
+        selection = self.con.get_box(target = "active")[0]
+        self.site_num_entry.delete(0, tk.END)
+        self.site_num_entry.insert(0, selection[0])
+
+        self.oin_entry.delete(0, tk.END)
+        self.oin_entry.insert(0, selection[4])
+
+        self.site_num_entry['state'] = 'disabled'
+        self.oin_entry['state'] = 'disabled'
 
         # Labels to grid
         self.warnings.grid(row = 0, column = 0, columnspan = 2, padx=(10, 10), pady = (10, 10), sticky='w')
@@ -302,19 +312,24 @@ class ExportBoxWindow(tk.Tk):
         self.export_button = ttk.Button(self.es_frame, text="Export Box", command = self.export_box, style="Accent.TButton")
         self.export_button.grid(row=1, column=0, columnspan = 3, padx = 10, pady = (10, 10), sticky="nsew")
 
-
-    def disable(self):
-        for i in self.entry_ls:
-            i['state'] = 'disabled'
-
     def export_box(self):
-        self.export_to_excel()
+        if (self.excel_var.get()):
+            self.export_to_excel()
+        if (self.html_var.get()):
+            self.export_to_html()
+        if (self.pdf_var.get()):
+            self.export_to_pdf()
+    
+    def export_to_excel():
+        pass
 
-    def export_to_excel(self):
+    def export_to_html():
+        pass
+
+    def export_to_pdf(self):
         selection = self.con.get_box_for_export()
 
         # Begin filtering
-
         # Remove box information from bags
         box_data = list(selection[0][0:10])
         bag_data = []
@@ -353,11 +368,12 @@ class ExportBoxWindow(tk.Tk):
                 # Clear bag data/set id
                 current_id = row[-1]
                 artifact_ls = []
-                bag_props = {'prov': row[0], 
-                            'cat_num': row[1], 
-                            'other': row[2], 
-                            'name': row[3], 
-                            'date': row[4],
+                bag_props = {'Site': box_data[0],
+                            'Prov': row[0], 
+                            'Cat#': row[1], 
+                            'Misc': row[2], 
+                            'Name': row[3], 
+                            'Date': row[4],
                             'artifact_ls': []}
 
             # Add artifact to list             
@@ -367,10 +383,19 @@ class ExportBoxWindow(tk.Tk):
         bag_props['artifact_ls'] = artifact_ls
         bag_ls.append(Bag(**bag_props.copy()))
 
+        # Uncomment to print list of bags
+        """
         for i in bag_ls:
             print(f"Bag info: {i.__dict__}")
             for x in i.artifact_ls:
                 print(x.__dict__)
+        """
+
+        # Prep for pdf output
+        sitenum = box_data[0]
+        invnum = box_data[2]
+
+        file_1 = PdfFile(bag_ls, sitenum, invnum)
 
                 
 

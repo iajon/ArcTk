@@ -1,0 +1,16 @@
+{
+    "column_prefixes": {
+        "0": "BAG_INDEX",
+        "1": "prov",
+        "2": "cat_num",
+        "3": "other",
+        "4": "name",
+        "5": "date",
+        "6": "ARTIFACT_TYPE",
+        "7": "ARTIFACT_COUNT",
+        "8": "ARTIFACT_WEIGHT"
+    },
+
+    "header_row": "1",
+    "last_column": "8"
+}

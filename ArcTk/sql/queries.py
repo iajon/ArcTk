@@ -38,14 +38,23 @@ class Connection:
                         (SELECT box_id FROM boxes WHERE box_active = 1));""",
                         (bag.prov, bag.cat_num, bag.other, bag.name, bag.date))
         
+        
         # Insert into artifacts table
         for artifact in bag.artifact_ls:
-            self.cur.execute("""INSERT INTO artifacts (artifact_count, artifact_weight, bag_id, artifact_type_id) 
-                            VALUES (?, ?,
-                            (SELECT bag_id FROM bags WHERE bag_active = 1),
-                            (SELECT artifact_type_id FROM artifact_types WHERE artifact_type_name = ?));""", 
-                            (artifact.ARTIFACT_COUNT, artifact.ARTIFACT_WEIGHT, artifact.ARTIFACT_TYPE))
-
+            try:
+                self.cur.execute("""INSERT INTO artifacts (artifact_count, artifact_weight, bag_id, artifact_type_id) 
+                                VALUES (?, ?,
+                                (SELECT bag_id FROM bags WHERE bag_active = 1),
+                                (SELECT artifact_type_id FROM artifact_types WHERE artifact_type_name = ?));""", 
+                                (artifact.ARTIFACT_COUNT, artifact.ARTIFACT_WEIGHT, artifact.ARTIFACT_TYPE))
+            except:
+                
+                self.cur.execute("""INSERT INTO artifacts (artifact_count, artifact_weight, bag_id, artifact_type_id) 
+                                VALUES (?, ?,
+                                (SELECT bag_id FROM bags WHERE bag_active = 1),
+                                (SELECT artifact_type_id FROM artifact_types WHERE artifact_type_name = ?));""", 
+                                (artifact.ARTIFACT_COUNT, artifact.ARTIFACT_WEIGHT, 'Unidentified'))
+        
         self.con.commit()
 
     def update_box(self, box, target = "active"):
@@ -141,6 +150,14 @@ class Connection:
         
         # Return selection
         return self.cur.fetchall()
+
+    def get_count(self):
+        self.cur.execute("""SELECT COUNT(*) FROM bags
+                            INNER JOIN boxes ON boxes.box_id = bags.box_id
+                            WHERE boxes.box_active = 1;""")
+
+        return list(self.cur.fetchall()[0])[0]
+        
 
     def get_box(self, target = "active"):
         # Select active
