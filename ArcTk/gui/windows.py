@@ -362,7 +362,6 @@ class ExportBoxWindow(tk.Tk):
 
             # Add artifact to list             
             artifact_ls.append(Artifact(**{'ARTIFACT_TYPE': row[5], 'ARTIFACT_COUNT': row[6], 'ARTIFACT_WEIGHT': row[7]}))
-            print(artifact_ls)
         
         # Append final bag
         bag_props['artifact_ls'] = artifact_ls

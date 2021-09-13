@@ -136,7 +136,8 @@ class Connection:
                             INNER JOIN boxes ON boxes.box_id = bags.box_id
                             INNER JOIN sites ON sites.site_id = boxes.site_id
                             INNER JOIN artifacts ON artifacts.bag_id = bags.bag_id
-                            INNER JOIN artifact_types ON artifact_types.artifact_type_id = artifacts.artifact_type_id;""")
+                            INNER JOIN artifact_types ON artifact_types.artifact_type_id = artifacts.artifact_type_id
+                            WHERE boxes.box_active = 1""")
         
         # Return selection
         return self.cur.fetchall()

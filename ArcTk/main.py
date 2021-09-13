@@ -30,7 +30,6 @@ class App(tk.Tk):
         c1 = CustomNotebook(self, self)
         c1.pack(side="top", fill="both", padx = 10, pady = 10)
 
-
 if __name__ == "__main__":
     app = App()
 

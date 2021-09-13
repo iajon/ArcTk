@@ -47,23 +47,25 @@ class BagView(ttk.Treeview):
     # Load most recent bag
     def load(self):
         selection = self.con.get_bag_by_box()
-        sel_ls = []
-        last_id = selection[0][0]
-        
-        for row in selection:
-            row = list(row)
-            if row[0] == last_id:
-                if len(sel_ls):
-                    sel_ls[-1].append(row)
+        if selection:
+            sel_ls = []
+            last_id = selection[0][0]
+            
+            for row in selection:
+                row = list(row)
+                if row[0] == last_id:
+                    if len(sel_ls):
+                        sel_ls[-1].append(row)
+                    else:
+                        sel_ls.append([row])
                 else:
                     sel_ls.append([row])
-            else:
-                sel_ls.append([row])
-                last_id = row[0]
+                    last_id = row[0]
+            
+            for i in sel_ls:
+                self.to_tree(i)
+            self.see(self.insert_ls[-1])
         
-        for i in sel_ls:
-            self.to_tree(i)
-        self.see(self.insert_ls[-1])
         
     # Pull most recent bag and insert
     def update(self):
@@ -97,7 +99,8 @@ class BagView(ttk.Treeview):
         return self.index
 
     def refresh(self):
-        self.update()
+        self.wipe()
+        self.load()
 
     # Wipe treeview
     def wipe(self):
