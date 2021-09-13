@@ -1,5 +1,9 @@
 import tkinter as tk
 from tkinter import ttk
+
+from itertools import chain
+import time
+
 from lib.Classes import Box
 
 class BoxEntryWindow(tk.Tk):
@@ -132,3 +136,90 @@ class BoxEntryWindow(tk.Tk):
     def disable(self):
         for i in self.entry_ls:
             i['state'] = 'disabled'
+
+class SetActiveBoxWindow(tk.Tk):
+    def __init__(self, app):
+        super().__init__()
+        self.em = app.event_manager
+        self.con = app.connection
+        self.app = app
+
+        # Title
+        self.title("Select Box")
+
+        # Theme
+        self.tk.call("source", "sun-valley.tcl")
+        self.tk.call("set_theme", "light")
+
+        # Valid box IDs
+        self.box_id_ls = list(chain(*self.con.get_box_ids()))
+
+        self.init_widgets()
+    
+    def init_widgets(self):
+        # Frame
+        self.frame = ttk.LabelFrame(self)
+        self.frame.pack(padx = 10, pady = (5, 10))
+
+        # Labels
+        self.box_id = ttk.Label(self.frame, text="Box ID", justify = tk.RIGHT)
+        self.error_msg = ttk.Label(self.frame, text="Error: Box ID does not exist!", justify = tk.CENTER)
+        self.invalid_msg = ttk.Label(self.frame, text="Error: Box ID is invalid!", justify = tk.CENTER)
+
+        # Labels to grid
+        self.box_id.grid(row = 0, column = 0, padx=(10, 10), pady = (10, 10), sticky='e')
+
+        # Entries
+        self.box_id_entry = ttk.Entry(self.frame)
+
+        # Entries to grid
+        self.box_id_entry.grid(row = 0, column = 1,  padx=(10, 10), pady = (10, 10))
+
+        # Separators
+        self.separator = ttk.Separator(self.frame)
+        self.separator.grid(row = 1, column = 0, columnspan = 4, padx = 10, sticky = 'ew')
+
+        # Buttons
+        self.select_button = ttk.Button(self.frame, text="Set Box as Active", command = self.select_box, style="Accent.TButton")
+
+        # Buttons to grid
+        self.select_button.grid(row=2, column=0, columnspan = 2, padx = 10, pady = (10, 10), sticky="nsew")
+
+        # Bind entries
+        self.bind_entries()
+
+    def select_box(self):
+        self.error_msg.grid_forget()
+        self.invalid_msg.grid_forget()
+
+        try:
+            id = int(self.box_id_entry.get())
+
+            if id in self.box_id_ls:
+                self.con.set_active_box(id)
+                self.em.refresh('active_box_frame')
+                self.em.refresh('small_active_box_frame')
+                self.em.refresh('box_treeview')
+                self.em.refresh('card_preview_frame')
+                self.destroy()
+            else:
+                self.error_msg.grid(row = 3, column = 0, columnspan=2, padx=(10, 10), pady = (10, 10))
+        except ValueError:
+            self.invalid_msg.grid(row = 3, column = 0, columnspan=2, padx=(10, 10), pady = (10, 10))
+
+    def bind_entries(self):
+        self.box_id_entry.bind("<FocusOut>", self.validate_id) 
+        self.box_id_entry.bind("<FocusIn>", self.validate_id)  
+        self.box_id_entry.bind("<KeyRelease>", self.validate_id)
+
+    def validate_id(self, event):
+        module = event.widget
+
+        if module.get() == "" or module.get().isspace() or module.get() not in self.box_id_ls:
+            module.state(["!invalid"])
+        else:
+            try:
+                int(module.get())
+                module.state(["!invalid"])
+            except ValueError:
+                module.state(["invalid"])

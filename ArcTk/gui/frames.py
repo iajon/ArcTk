@@ -24,7 +24,7 @@ class Menu(ttk.LabelFrame):
         self.export_box_data_button.pack(padx = 20, pady = (5, 20), fill = "both", expand = "True")#grid(row=2, column=0, padx = 30, pady = (0, 10), sticky="nsew")
 
     def set_active(self):
-        pass
+        self.em.initialize("set_active_box_window")
 
     def add_new(self):
         self.em.initialize("box_entry_window")
@@ -183,6 +183,7 @@ class ActiveBox(ttk.LabelFrame):
         # Update other active box view
         self.em.refresh("small_active_box_frame")
         self.em.refresh("box_treeview")
+        self.em.refresh("card_preview_frame")
 
         self.refresh()
 
@@ -556,13 +557,18 @@ class CardPreview(ttk.LabelFrame):
         self.frontvar = tk.StringVar(self)
         self.backvar = tk.StringVar(self)
 
+        # List of bag info for sql
+        self.f_data = []
+
         # List of artifacts for preview
         self.b_string = []
 
         # List of artifacts for sql
         self.b_data = []
 
-        self.frontvar.set("Site:                   \nProv:                   \nCat#:                  \nMisc:                   \nName:                  \nDate:                   ")
+        site_num = 'Site:  ' + self.em.get('small_active_box_frame')[0] + '\n'
+
+        self.frontvar.set(f"{site_num}Prov:                   \nCat#:                  \nMisc:                   \nName:                  \nDate:                   ")
         self.backvar.set("Artifact #1: (n) Ng     ")
 
         self.provenience_label = ttk.Label(self.front, textvariable=self.frontvar, font = ("Courier", 8, "italic"), justify = tk.LEFT)
@@ -665,28 +671,7 @@ class CardPreview(ttk.LabelFrame):
         row_ls.append(row +  spacing)
 
         return '\n'.join(row_ls).replace('@', ' ')
-    """
-    def format_back(self, string):
-        split = string.split()
-        join_ls = []
-        join_len = 0
-        formatted = []
-        linelen = 22
 
-        for i in split:
-            if join_len + len(i) >= linelen:
-                formatted.append(' '.join(join_ls) + '\n')
-                join_ls = [i]
-                join_len = len(i)
-            else:
-                join_ls.append(i)
-                join_len += len(i) + 1 # +1 for space
-
-        formatted.append(' '.join(join_ls) + '\n')
-    
-        return ''.join(formatted)
-        self.init_widgets()
-    """
     def set(self, side = "front", dataset = {}):
         if side == "front":
             self.load_front(dataset)
@@ -699,6 +684,8 @@ class CardPreview(ttk.LabelFrame):
     def refresh(self):
         self.front.pack_forget()
         self.back.pack_forget()
+
+        self.init_widgets()
 
 class SubmitButton(ttk.LabelFrame):
     def __init__(self, parent, app, text = "", **kwargs):

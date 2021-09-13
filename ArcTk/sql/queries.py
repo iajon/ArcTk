@@ -79,6 +79,24 @@ class Connection:
                             (box.oin, box.shelving_num, box.id_num, box.collectors, box.years, box.pname, box.ptype, box.contract, box.site_num))
         self.con.commit()
 
+    def set_active_box(self, target):
+        # Set all boxes inactive
+        self.cur.execute("UPDATE boxes SET box_active = 0;")
+
+        # Set target as active
+        self.cur.execute("""UPDATE boxes
+                            SET box_active = 1
+                            WHERE box_id = ?;""",
+                            (target,))
+
+        self.con.commit()
+        
+    def get_box_ids(self):
+        self.cur.execute("""SELECT boxes.box_id
+                            FROM boxes""")
+        
+        return self.cur.fetchall()
+
     def get_artifacts(self):
         # Select all artifacts
         self.cur.execute("""SELECT artifact_types.artifact_type_name, artifacts.artifact_count, artifacts.artifact_weight

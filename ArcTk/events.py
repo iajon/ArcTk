@@ -1,4 +1,4 @@
-from gui.windows import BoxEntryWindow
+from gui.windows import BoxEntryWindow, SetActiveBoxWindow
 
 
 class EventManager():
@@ -9,6 +9,8 @@ class EventManager():
         # This prevents window from opening on launch
         if target == "box_entry_window":
             self.app.widgets[target] = BoxEntryWindow(self.app)
+        if target == "set_active_box_window":
+            self.app.widgets[target] = SetActiveBoxWindow(self.app)
 
     def get(self, target: str):
         return self.app.widgets[target].get()
