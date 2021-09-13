@@ -21,7 +21,7 @@ class BagView(ttk.Treeview):
         # Format columns
         self.column("#0", width=20, minwidth = 20)
         self.column("SiteNum", anchor = "w", width=80)
-        self.column("Prov", anchor = "w", width=240)
+        self.column("Prov", anchor = "w", width=290)
         self.column("CatNum", anchor = "w", width=100)
         self.column("Other", anchor = "w", width=120)
         self.column("Name", anchor = "w", width=120)
@@ -123,13 +123,13 @@ class BoxView(ttk.Treeview):
         self.column("#0", width=0, stretch = NO)
         self.column("box_id", anchor = "w", width=100)
         self.column("sitenum", anchor = "w", width=100)
-        self.column("sitename", anchor = "w", width=120)
+        self.column("sitename", anchor = "w", width=130)
         self.column("oin", anchor = "w", width=120)
         self.column("snum", anchor = "w", width=120)
         self.column("collectors", anchor = "w", width=120)
         self.column("years", anchor = "w", width=130, minwidth = 130)
-        self.column("pname", anchor = "center", width=90, minwidth = 90)
-        self.column("ptype", anchor = "center", width=110)
+        self.column("pname", anchor = "center", width=110, minwidth = 90)
+        self.column("ptype", anchor = "center", width=130)
         self.column("processed", anchor = "center", width=80)
 
         # Create headings
@@ -170,11 +170,17 @@ class BoxView(ttk.Treeview):
         
     # Pull most recent box and insert
     def update(self):
-        selection = self.con.get_bag_by_active()
+        selection = self.con.get_active_box()
         sel_ls = []
 
+        to_remove = [0, 1, 6, 11]
         for row in selection:
-            sel_ls.append(list(row))
+            row = list(row)
+            temp_row = [row[-1]]
+            for i in range(len(row)):
+                if i not in to_remove:
+                    temp_row.append(row[i])                    
+            sel_ls.append(list(temp_row))
 
         self.to_tree(sel_ls)
         self.see(self.insert_ls[-1])
@@ -193,6 +199,9 @@ class BoxView(ttk.Treeview):
         if val == True:
             self.index += 1
         return self.index
+
+    def refresh(self):
+        self.update()
 
     # Wipe treeview
     def wipe(self):

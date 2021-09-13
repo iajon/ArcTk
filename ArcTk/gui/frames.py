@@ -702,7 +702,6 @@ class CardPreview(ttk.LabelFrame):
         self.front.pack_forget()
         self.back.pack_forget()
 
-
 class SubmitButton(ttk.LabelFrame):
     def __init__(self, parent, app, text = "", **kwargs):
         super().__init__(parent, text = text, **kwargs)

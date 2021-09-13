@@ -126,6 +126,7 @@ class BoxEntryWindow(tk.Tk):
         self.con.insert_box(box, 1)
         self.em.refresh('active_box_frame')
         self.em.refresh('small_active_box_frame')
+        self.em.refresh('box_treeview')
         self.destroy()
 
     def disable(self):
