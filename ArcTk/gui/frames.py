@@ -564,8 +564,8 @@ class CardPreview(ttk.LabelFrame):
         # List of artifacts for sql
         self.b_data = []
 
-        self.frontvar.set("Site:                \nProv:                \nCat #:               \nMisc:                \nName:                \nDate:                ")
-        self.backvar.set("Artifact #1: (n) Ng \n\n\n\n\n")
+        self.frontvar.set("Site:                   \nProv:                   \nCat#:                  \nMisc:                   \nName:                  \nDate:                   ")
+        self.backvar.set("Artifact #1: (n) Ng     ")
 
         self.provenience_label = ttk.Label(self.front, textvariable=self.frontvar, font = ("Courier", 8, "italic"), justify = tk.LEFT)
         self.provenience_label.grid(row = 0, column = 0, padx=(10, 10), pady = (2, 5), sticky='e')
@@ -578,6 +578,8 @@ class CardPreview(ttk.LabelFrame):
         site_num = 'Site:  ' + self.em.get('small_active_box_frame')[0] + '\n'
 
         self.f_data = data
+        prefixes = ['Prov: ', 'Cat#: ', 'Misc: ', 'Name: ', 'Date: ']
+
         data_ls = []
         data_ls.append(data['prov'])
         data_ls.append(data['cat_num'])
@@ -585,14 +587,15 @@ class CardPreview(ttk.LabelFrame):
         data_ls.append(data['name'])
         data_ls.append(data['date'])
 
-        temp = []
-        for i in data_ls:
+        temp_data = []
+        temp_prefixes=[]
+        for i, j in zip(data_ls, prefixes):
             if not i.isspace() and i != '':
-                temp.append(i)
-        data_ls = temp
+                temp_data.append(i)
+                temp_prefixes.append(j)
 
-        prefixes = ['Prov:  ', 'Cat #: ', 'Misc.: ', 'Name:  ', 'Date:  ']
-        pt = []
+        data_ls = temp_data
+        prefixes = temp_prefixes
 
         temp = []
         for i, j in zip(data_ls, prefixes):
@@ -609,29 +612,62 @@ class CardPreview(ttk.LabelFrame):
         self.backvar.set(''.join(self.b_string))
 
     def format_front(self, string, prefix):
+        line_length = 18
+
+        row = ''
+        row_ls = []
+
         split = string.split()
-        join_ls = []
-        join_len = 0
-        formatted = []
-        linelen = 17
-        
-        for i in split:
-            if join_len + len(i) >= linelen:
-                formatted.append(' '.join(join_ls) + '\n')
-                join_ls = [i]
-                join_len = len(i)
+        for i in range(len(split)-1):
+            split[i] += '@'
+
+        for word in split:
+            if len(row) + len(word) - 1 > line_length:
+                row_ls.append(row[0:-1])
+                row = word
             else:
-                join_ls.append(i)
-                join_len += len(i) + 1 # +1 for space
+                row += word
+        
+        # Append final row
+        spacing = ''
+        for i in range(line_length - len(row)):
+            spacing += '@'
+        row_ls.append(row +  spacing)
 
-        formatted.append(' '.join(join_ls) + '\n')
+        for i in range(len(row_ls)):
+            if i == 0:
+                row_ls[i] = prefix + row_ls[i]
+            else:
+                row_ls[i] = '      ' + row_ls[i]
 
-        for i in range(len(formatted)):
-            if i != 0:
-                formatted[i] = '       ' + formatted[i]
+        return '\n'.join(row_ls).replace('@', ' ')
 
-        return prefix + ''.join(formatted)
+    def format_back(self, string):
+        # This number must be 6 more than the line_length of the format_front function
+        line_length = 24
 
+        row = ''
+        row_ls = []
+
+        split = string.split()
+        for i in range(len(split)-1):
+            split[i] += '@'
+
+        for word in split:
+            if len(row) + len(word) - 1 > line_length:
+                row_ls.append(row[0:-1])
+                row = word
+            else:
+                row += word
+        
+        # Append final row
+        spacing = ''
+        for i in range(line_length - len(row)):
+            spacing += '@'
+        row_ls.append(row +  spacing)
+
+        return '\n'.join(row_ls).replace('@', ' ')
+    """
     def format_back(self, string):
         split = string.split()
         join_ls = []
@@ -651,7 +687,8 @@ class CardPreview(ttk.LabelFrame):
         formatted.append(' '.join(join_ls) + '\n')
     
         return ''.join(formatted)
-
+        self.init_widgets()
+    """
     def set(self, side = "front", dataset = {}):
         if side == "front":
             self.load_front(dataset)
@@ -665,7 +702,6 @@ class CardPreview(ttk.LabelFrame):
         self.front.pack_forget()
         self.back.pack_forget()
 
-        self.init_widgets()
 
 class SubmitButton(ttk.LabelFrame):
     def __init__(self, parent, app, text = "", **kwargs):
