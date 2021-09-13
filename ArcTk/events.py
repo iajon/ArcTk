@@ -1,4 +1,4 @@
-from gui.windows import BoxEntryWindow, SetActiveBoxWindow
+from gui.windows import BoxEntryWindow, ExportBoxWindow, SetActiveBoxWindow
 
 
 class EventManager():
@@ -11,6 +11,8 @@ class EventManager():
             self.app.widgets[target] = BoxEntryWindow(self.app)
         if target == "set_active_box_window":
             self.app.widgets[target] = SetActiveBoxWindow(self.app)
+        if target == "export_box_window":
+            self.app.widgets[target] = ExportBoxWindow(self.app)
 
     def get(self, target: str):
         return self.app.widgets[target].get()

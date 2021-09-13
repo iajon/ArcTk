@@ -90,6 +90,18 @@ class Connection:
                             (target,))
 
         self.con.commit()
+
+    def get_active_box(self):
+        self.cur.execute("SELECT * FROM active_box_view")
+
+        # Return selection
+        return self.cur.fetchall()
+
+    def get_box_for_export(self):
+        self.cur.execute("SELECT * FROM export_view")
+
+        # Return selection
+        return self.cur.fetchall()
         
     def get_box_ids(self):
         self.cur.execute("""SELECT boxes.box_id
@@ -141,11 +153,7 @@ class Connection:
         # Return selection
         return self.cur.fetchall()
         
-    def get_active_box(self):
-        self.cur.execute("SELECT * FROM active_box_view")
-
-        # Return selection
-        return self.cur.fetchall()
+    
         
     def get_box_by_unprocessed(self):
         self.cur.execute("SELECT * FROM unprocessed_box_view")

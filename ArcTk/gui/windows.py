@@ -4,7 +4,7 @@ from tkinter import ttk
 from itertools import chain
 import time
 
-from lib.Classes import Box
+from lib.Classes import Box, Bag, Artifact
 
 class BoxEntryWindow(tk.Tk):
     def __init__(self, app):
@@ -200,6 +200,7 @@ class SetActiveBoxWindow(tk.Tk):
                 self.em.refresh('active_box_frame')
                 self.em.refresh('small_active_box_frame')
                 self.em.refresh('box_treeview')
+                self.em.refresh('bag_treeview')
                 self.em.refresh('card_preview_frame')
                 self.destroy()
             else:
@@ -223,3 +224,156 @@ class SetActiveBoxWindow(tk.Tk):
                 module.state(["!invalid"])
             except ValueError:
                 module.state(["invalid"])
+
+class ExportBoxWindow(tk.Tk):
+    def __init__(self, app):
+        super().__init__()
+        self.em = app.event_manager
+        self.con = app.connection
+        self.app = app
+
+        # Title
+        self.title("Export Box")
+
+        # Theme
+        self.tk.call("source", "sun-valley.tcl")
+        self.tk.call("set_theme", "light")
+
+        self.init_widgets()
+    
+    def init_widgets(self):
+        # Frame
+        self.frame = ttk.LabelFrame(self)
+        self.frame.pack(padx = 10, pady = (5, 10))
+
+        # Labels
+        warning_text = "*Please verify that the appropriate box is selected."
+        self.warnings = ttk.Label(self.frame, text=warning_text)
+
+        self.site_num = ttk.Label(self.frame, text="Site Name")
+        self.oin = ttk.Label(self.frame, text="Old Inventory Number(s)")
+
+        self.bag_count = ttk.Label(self.frame, text="Bag Total: 100 Bags")
+        self.page_count = ttk.Label(self.frame, text="Page Total: 5 Pages")
+
+        # Entries
+        self.site_num_entry = ttk.Entry(self.frame)
+        self.oin_entry = ttk.Entry(self.frame)
+
+        # Labels to grid
+        self.warnings.grid(row = 0, column = 0, columnspan = 2, padx=(10, 10), pady = (10, 10), sticky='w')
+
+        # Separators
+        self.separator = ttk.Separator(self.frame)
+        self.separator.grid(row = 1, column = 0, columnspan = 4, padx = 10, sticky = 'ew')
+
+        # Labels to grid
+        self.site_num.grid(row = 2, column = 0, padx=(10, 10), pady = (10, 0), sticky='w')
+        self.oin.grid(row = 2, column = 1, padx=(10, 10), pady = (10, 0), sticky='w')
+
+        self.bag_count.grid(row = 4, column = 0, padx=(10, 10), pady = (0, 10))
+        self.page_count.grid(row = 4, column = 1, padx=(10, 10), pady = (0, 10))
+
+        # Entries to grid
+        self.site_num_entry.grid(row = 3, column = 0,  padx=(10, 10), pady = (5, 10))
+        self.oin_entry.grid(row = 3, column = 1,  padx=(10, 10), pady = (5, 10))
+
+        # Export Settings Frame
+        self.es_frame = ttk.LabelFrame(self, text="Export Settings")
+        self.es_frame.pack(padx = 10, pady = (5, 10))
+
+        # Checkbuttons
+        self.excel_var = tk.IntVar(self)
+        self.excel_var.set(0)
+        self.excel_cb = ttk.Checkbutton(self.es_frame, text="Export Excel", variable = self.excel_var)
+        self.excel_cb.grid(row = 0, column = 0, padx = (10, 10), pady = (10, 10), sticky="ew")
+
+        self.html_var = tk.IntVar(self)
+        self.html_var.set(0)
+        self.html_cb = ttk.Checkbutton(self.es_frame, text="Export HTML", variable = self.html_var)
+        self.html_cb.grid(row = 0, column = 1, padx = (10, 10), pady = (10, 10), sticky="ew")
+
+        self.pdf_var = tk.IntVar(self)
+        self.pdf_var.set(0)
+        self.pdf_cb = ttk.Checkbutton(self.es_frame, text="Export PDF", variable = self.pdf_var)
+        self.pdf_cb.grid(row = 0, column = 2, padx = (10, 10), pady = (10, 10), sticky="ew")
+
+        # Buttons
+        self.export_button = ttk.Button(self.es_frame, text="Export Box", command = self.export_box, style="Accent.TButton")
+        self.export_button.grid(row=1, column=0, columnspan = 3, padx = 10, pady = (10, 10), sticky="nsew")
+
+
+    def disable(self):
+        for i in self.entry_ls:
+            i['state'] = 'disabled'
+
+    def export_box(self):
+        self.export_to_excel()
+
+    def export_to_excel(self):
+        selection = self.con.get_box_for_export()
+
+        # Begin filtering
+
+        # Remove box information from bags
+        box_data = list(selection[0][0:10])
+        bag_data = []
+        for row in selection:
+            bag_data.append(list(row[10:]))
+
+
+        # Create a list of bags
+        bag_ls = []
+        artifact_ls = []
+
+        bag_props = {'prov': '', 
+                    'cat_num': '', 
+                    'other': '', 
+                    'name': '', 
+                    'date': '',
+                    'artifact_ls': []}
+
+        artifact_props = {'ARTIFACT_TYPE': '',
+                        'ARTIFACT_COUNT': '',
+                        'ARTIFACT_WEIGHT': ''}
+
+        current_id = 0
+        flag = False
+        for row in bag_data:
+
+            # If new bag id
+            if current_id != row[-1]:
+                if flag == False:
+                    flag = True    
+                else:
+                    # Append bag
+                    bag_props['artifact_ls'] = artifact_ls
+                    bag_ls.append(Bag(**bag_props.copy()))
+
+                # Clear bag data/set id
+                current_id = row[-1]
+                artifact_ls = []
+                bag_props = {'prov': row[0], 
+                            'cat_num': row[1], 
+                            'other': row[2], 
+                            'name': row[3], 
+                            'date': row[4],
+                            'artifact_ls': []}
+
+            # Add artifact to list             
+            artifact_ls.append(Artifact(**{'ARTIFACT_TYPE': row[5], 'ARTIFACT_COUNT': row[6], 'ARTIFACT_WEIGHT': row[7]}))
+            print(artifact_ls)
+        
+        # Append final bag
+        bag_props['artifact_ls'] = artifact_ls
+        bag_ls.append(Bag(**bag_props.copy()))
+
+        for i in bag_ls:
+            print(f"Bag info: {i.__dict__}")
+            for x in i.artifact_ls:
+                print(x.__dict__)
+
+                
+
+
+
