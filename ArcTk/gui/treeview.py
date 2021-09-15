@@ -16,22 +16,24 @@ class BagView(ttk.Treeview):
 
     def init_tree(self):
         # Define columns
-        self['columns'] = ("SiteNum", "Prov", "CatNum", "Other", "Name", "Date", "Type", "Count", "Weight")
+        self['columns'] = ("BagID", "SiteNum", "Prov", "CatNum", "Other", "Name", "Date", "Type", "Count", "Weight")
 
         # Format columns
         self.column("#0", width=20, minwidth = 20)
+        self.column("BagID", anchor = "w", width=80)
         self.column("SiteNum", anchor = "w", width=80)
-        self.column("Prov", anchor = "w", width=290)
+        self.column("Prov", anchor = "w", width=270)
         self.column("CatNum", anchor = "w", width=100)
-        self.column("Other", anchor = "w", width=120)
-        self.column("Name", anchor = "w", width=120)
-        self.column("Date", anchor = "w", width=120)
+        self.column("Other", anchor = "w", width=100)
+        self.column("Name", anchor = "w", width=100)
+        self.column("Date", anchor = "w", width=130)
         self.column("Type", anchor = "w", width=150, minwidth = 150)
         self.column("Count", anchor = "center", width=60, minwidth = 60)
         self.column("Weight", anchor = "center", width=80)
 
         # Create headings
         self.heading("#0", text = "", anchor = "center")
+        self.heading("BagID", text = "Bag ID", anchor = "center")
         self.heading("SiteNum", text = "Site Number", anchor = "center")
         self.heading("Prov", text = "Provenience", anchor = "center")
         self.heading("CatNum", text = "Cat. #", anchor = "center")
@@ -86,10 +88,10 @@ class BagView(ttk.Treeview):
             if len(str(row[-1])):
                 row[-1] = str(row[-1]) + 'g'
             if firstrow == True:
-                self.insert_ls.append(self.insert('', index = 'end', iid = parent, values = row[1:]))
+                self.insert_ls.append(self.insert('', index = 'end', iid = parent, values = row))
                 firstrow = False
             else:
-                row = ("", "", "", "", "", "", "", row[7], row[8], row[9])
+                row = ("", "", "", "", "", "", "", "", row[7], row[8], row[9])
                 self.insert(parent, index = 'end', iid = self.iid(), values = row[1:])
 
     # Get/increments index

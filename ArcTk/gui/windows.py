@@ -513,9 +513,8 @@ class AdditionalToolsWindow(tk.Tk):
         self.tk.call("source", "sun-valley.tcl")
         self.tk.call("set_theme", "light")
 
-        # Valid box IDs
-        self.box_id_ls = list(chain(*self.con.get_bag_ids()))
-        print(self.box_id_ls)
+        # Valid bag IDs
+        self.bag_id_ls = list(chain(*self.con.get_bag_ids()))
 
         self.init_widgets()
     
@@ -526,6 +525,8 @@ class AdditionalToolsWindow(tk.Tk):
 
         # Labels
         self.artifact_id = ttk.Label(self.cpf, text="Artifact ID", justify = tk.RIGHT)
+        self.error_msg = ttk.Label(self.cpf, text="Error: Bag ID does not exist!", justify = tk.CENTER)
+        self.invalid_msg = ttk.Label(self.cpf, text="Error: Bag ID is invalid!", justify = tk.CENTER)
 
         # Labels to grid
         self.artifact_id.grid(row = 0, column = 0, padx=(10, 10), pady = (10, 10), sticky='e')
@@ -537,10 +538,12 @@ class AdditionalToolsWindow(tk.Tk):
         self.artifact_id_entry.grid(row = 0, column = 1,  padx=(10, 10), pady = (10, 10))
 
         # Buttons
-        self.delete_artifact_button = ttk.Button(self.cpf, text="Delete Artifact", command = self.delete_artifact, style="Accent.TButton")
+        self.wipe_artifacts_button = ttk.Button(self.cpf, text="Wipe Card Data", command = self.wipe_all, style="Accent.TButton")
+        self.delete_artifact_button = ttk.Button(self.cpf, text="Delete Artifact", command = self.delete_artifact)
 
         # Buttons to grid
         self.delete_artifact_button.grid(row=1, column=0, columnspan = 2, padx = 10, pady = (10, 10), sticky="nsew")
+        self.wipe_artifacts_button.grid(row=2, column=0, columnspan = 2, padx = 10, pady = (10, 10), sticky="nsew")
 
         # Frame
         self.bsf = ttk.LabelFrame(self, text = "Bag Selection Tools")
@@ -565,54 +568,92 @@ class AdditionalToolsWindow(tk.Tk):
         self.separator.grid(row = 1, column = 0, columnspan = 4, padx = 10, sticky = 'ew')
 
         # Buttons
-        self.select_button = ttk.Button(self.bsf, text="Set Bag as Active", command = self.select_bag)
+        self.select_button = ttk.Button(self.bsf, text="Edit Bag", command = self.select_bag)
         self.delete_button = ttk.Button(self.bsf, text="Delete Bag", command = self.delete_bag, style="Accent.TButton")
+        self.cancel_button = ttk.Button(self.bsf, text="Cancel Edits", command = self.cancel_edits)
 
         # Buttons to grid
         self.select_button.grid(row=2, column=0, columnspan = 2, padx = 10, pady = (10, 10), sticky="nsew")
         self.delete_button.grid(row=3, column=0, columnspan = 2, padx = 10, pady = (0, 10), sticky="nsew")
 
-        # Bind entries
-        self.bind_entries()
-
     def delete_artifact(self):
+        self.bag_id_ls = list(chain(*self.con.get_bag_ids()))
         try:
             id = int(self.artifact_id_entry.get())
 
             self.em.update("card_preview_frame", id = id-1)
+
+            self.artifact_id_entry.delete(0, tk.END)
         except:
             pass
+    
+    def wipe_all(self):
+        self.em.refresh("card_preview_frame")
+        self.em.wipe("bag_entry_frame")
+        self.em.wipe("artifact_entry_frame")
 
+        self.cancel_edits()
+
+        self.artifact_id_entry.delete(0, tk.END)
+            
     def select_bag(self):
-        pass
+        self.bag_id_ls = list(chain(*self.con.get_bag_ids()))
+        try:
+            id = int(self.bag_id_entry.get())
 
-    def delete_bag(self):
-        pass
+            if id in self.bag_id_ls:
+                self.em.set("bag_entry_frame", id = id)
+                self.em.set_back("card_preview_frame", id = id)
+                self.em.update("submit_button", id = id)
 
-    def select_box(self):
+                self.select_button.grid_forget()
+                self.cancel_button.grid(row=2, column=0, columnspan = 2, padx = 10, pady = (10, 10), sticky="nsew")
+
+                self.bag_id_entry.delete(0, tk.END)
+
+                self.error_msg.grid_forget()
+                self.invalid_msg.grid_forget()
+            else:
+                self.invalid_msg.grid_forget()
+                self.error_msg.grid(row = 4, column = 0, columnspan=2, padx=(10, 10), pady = (10, 10))
+        except:
+            self.error_msg.grid_forget()
+            self.invalid_msg.grid(row = 4, column = 0, columnspan=2, padx=(10, 10), pady = (10, 10))
+    
+    def cancel_edits(self):
+        self.bag_id_ls = list(chain(*self.con.get_bag_ids()))
+        self.em.update("submit_button", id = -1)
+        self.cancel_button.grid_forget()
+        self.select_button.grid(row=2, column=0, columnspan = 2, padx = 10, pady = (10, 10), sticky="nsew")
+
+        # Wipe fields
+        self.em.wipe("bag_entry_frame")
+        self.em.wipe("artifact_entry_frame")
+        self.em.refresh("card_preview_frame")
         self.error_msg.grid_forget()
         self.invalid_msg.grid_forget()
 
+
+    def delete_bag(self):
+        self.bag_id_ls = list(chain(*self.con.get_bag_ids()))
         try:
-            id = int(self.box_id_entry.get())
+            id = int(self.bag_id_entry.get())
 
-            if id in self.box_id_ls:
-                self.con.set_active_box(id)
-                self.em.refresh('active_box_frame')
-                self.em.refresh('small_active_box_frame')
-                self.em.refresh('box_treeview')
+            if id in self.bag_id_ls:
+                self.con.delete_bag(id)
+
+                self.error_msg.grid_forget()
+                self.invalid_msg.grid_forget()
+
                 self.em.refresh('bag_treeview')
-                self.em.refresh('card_preview_frame')
-                self.destroy()
             else:
-                self.error_msg.grid(row = 3, column = 0, columnspan=2, padx=(10, 10), pady = (10, 10))
-        except ValueError:
-            self.invalid_msg.grid(row = 3, column = 0, columnspan=2, padx=(10, 10), pady = (10, 10))
-
-    def bind_entries(self):
-        self.box_id_entry.bind("<FocusOut>", self.validate_id) 
-        self.box_id_entry.bind("<FocusIn>", self.validate_id)  
-        self.box_id_entry.bind("<KeyRelease>", self.validate_id)
+                self.invalid_msg.grid_forget()
+                self.error_msg.grid(row = 4, column = 0, columnspan=2, padx=(10, 10), pady = (10, 10))
+        except:
+            self.error_msg.grid_forget()
+            self.invalid_msg.grid(row = 4, column = 0, columnspan=2, padx=(10, 10), pady = (10, 10))
+        
+        
 
     def validate_id(self, event):
         module = event.widget

@@ -421,7 +421,10 @@ class BagEntry(ttk.LabelFrame):
         self.em.set("card_preview_frame", side = "front", dataset = data)
 
         # Wipe entries
-        self.wipe()
+        if not self.holdover_var.get():
+            self.wipe()
+        else:
+            self.holdover_var.set(0)
 
     def get_data(self):
         bag_dict = {'prov':str(self.entry_ls[0].get()),
@@ -430,6 +433,16 @@ class BagEntry(ttk.LabelFrame):
                     'name':str(self.entry_ls[3].get()),
                     'date':str(self.entry_ls[4].get())}
         return bag_dict
+
+    def set(self, id = 0):
+        data = self.con.get_bag_by_id(id)
+        print(data)
+
+        for i, j in zip(self.entry_ls, data):
+            i.delete(0, tk.END)
+            i.insert(0, j)
+        self.holdover_var.set(0)
+        self.to_card()
 
     def wipe(self):
         if self.holdover_var == 1:
@@ -610,7 +623,7 @@ class CardPreview(ttk.LabelFrame):
 
     def load_front(self, data):
         # Preformatted site number
-        site_num = 'Site:  ' + self.em.get('small_active_box_frame')[0] + '\n'
+        site_num = 'Site: ' + self.em.get('small_active_box_frame')[0] + '\n'
 
         self.f_data = data
         prefixes = ['Prov: ', 'Cat#: ', 'Misc: ', 'Name: ', 'Date: ']
@@ -645,6 +658,7 @@ class CardPreview(ttk.LabelFrame):
 
     def load_back(self, data):
         data['id']=len(self.b_data)
+        print(f"Data: {data}")
 
         self.b_data.append(data)
         if data['ARTIFACT_COUNT'] == "" or data['ARTIFACT_COUNT'].isspace():
@@ -695,11 +709,7 @@ class CardPreview(ttk.LabelFrame):
                 if int(new_data[i]['id']) == int(id):
                     new_data.pop(i)
                     flag = True
-        print(new_data)
         
-        # Reset ids
-        #for i in range(len(self.b_data)):
-            #self.b_data[i]['id'] = i
         self.b_data = []
         self.b_string = []
         self.backvar.set("Artifact #1: (n) Ng     ")
@@ -707,9 +717,6 @@ class CardPreview(ttk.LabelFrame):
         for i in new_data:
             self.load_back(i)
             
-
-
-
     def format_back(self, string):
         # This number must be 6 more than the line_length of the format_front function
         line_length = 24
@@ -742,6 +749,25 @@ class CardPreview(ttk.LabelFrame):
         else:
             self.load_back(dataset)
     
+    def set_back(self, id = 0):
+        print('pls')
+
+        data = self.con.get_artifact_by_id(id)
+        new_data = []
+
+        for i in data:
+            new_data.append({'ARTIFACT_TYPE':str(i[0]),
+                             'ARTIFACT_COUNT':str(i[1]),
+                             'ARTIFACT_WEIGHT':str(i[2])})
+        self.b_data = []
+        self.b_string = []
+        self.backvar.set("Artifact #1: (n) Ng     ")
+
+        print(new_data)
+
+        for i in new_data:
+            self.load_back(i)
+
     def get(self):
         return [self.f_data, self.b_data]
 
@@ -758,6 +784,9 @@ class SubmitButton(ttk.LabelFrame):
         self.em = app.event_manager
         self.con = app.connection
 
+        self.is_update = False
+        self.update_id = 0
+
         self.init_widgets()
     
     def init_widgets(self):
@@ -766,10 +795,11 @@ class SubmitButton(ttk.LabelFrame):
         self.submit_button.pack(fill="both", expand="True", padx = 10, pady = (5, 12))
 
         # Disable submit button
-        self.disable()
+        #self.disable()
 
     def submit(self):
         ls = self.em.get('card_preview_frame')
+        print(ls)
         artifact_ls = []
 
         if len(ls[1]) == 0:
@@ -779,21 +809,34 @@ class SubmitButton(ttk.LabelFrame):
         else:
             for i in ls[1]:
                 artifact_ls.append(Artifact(**i))
+        try:
+            ls[0]['artifact_ls'] = artifact_ls
 
-        ls[0]['artifact_ls'] = artifact_ls
+            bag = Bag(**ls[0])
+
+            if self.is_update == True:
+                self.con.delete_bag(self.update_id)
+
+            self.con.insert_bag(bag)
+
+            self.em.refresh('card_preview_frame')
+            self.em.refresh('bag_treeview')
+        except:
+            print('Failed')
         
-        bag = Bag(**ls[0])
-        
-        self.con.insert_bag(bag)
-
-        self.em.refresh('card_preview_frame')
-        self.em.refresh('bag_treeview')
-
     def set(self, enabled = "False"):
         if enabled:
             self.enable()
         else:
             self.disable()
+    
+    def update(self, id = 0):
+        if id == -1:
+            self.is_update = False
+            self.update_id = 0
+        else:
+            self.is_update = True
+            self.update_id = id
 
     def enable(self):
         self.submit_button['state'] = 'enabled'

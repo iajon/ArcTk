@@ -106,6 +106,12 @@ class Connection:
 
         # Return selection
         return self.cur.fetchall()
+    
+    def get_bag(self, id):
+        self.cur.execute("SELECT * FROM active_box_view")
+
+        # Return selection
+        return self.cur.fetchall()
 
     def get_box_for_export(self):
         self.cur.execute("SELECT * FROM export_view")
@@ -156,8 +162,42 @@ class Connection:
                             INNER JOIN artifact_types ON artifact_types.artifact_type_id = artifacts.artifact_type_id
                             WHERE boxes.box_active = 1""")
         
-        # Return selection
         return self.cur.fetchall()
+
+    def get_bag_by_id(self, id):
+        # Select all bags from active box
+        self.cur.execute("""SELECT bags.bag_prov, bags.bag_cat_num, bags.bag_other, bags.bag_name, bags.bag_date
+                            FROM bags
+                            WHERE bags.bag_id=?""", (id,))
+        
+        # Return selection
+        return list(self.cur.fetchall()[0])
+
+    def get_artifact_by_id(self, id):
+        # Select all bags from active box
+        self.cur.execute("""SELECT artifact_types.artifact_type_name, artifacts.artifact_count, artifacts.artifact_weight
+                            FROM artifacts
+                            INNER JOIN artifact_types ON artifact_types.artifact_type_id = artifacts.artifact_type_id
+                            INNER JOIN bags ON bags.bag_id = artifacts.bag_id
+                            WHERE bags.bag_id = ?""", (id,))
+        
+        # Return selection
+        ls = []
+        for i in self.cur.fetchall():
+            print(list(i))
+            ls.append(list(i))
+        
+        print(ls)
+        return ls
+
+    def delete_bag(self, id):
+        self.cur.execute("""DELETE FROM artifacts 
+                            WHERE artifacts.bag_id = ?;""", (id,))
+        
+        self.cur.execute("""DELETE FROM bags 
+                            WHERE bags.bag_id = ?;""", (id,))
+
+        self.con.commit()
 
     def get_count(self):
         self.cur.execute("""SELECT COUNT(*) FROM bags

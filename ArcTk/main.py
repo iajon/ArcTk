@@ -6,7 +6,7 @@ import sqlite3 as sl
 from gui.frames import *
 from gui.notebooks import *
 from gui.tabs import *
-from gui.treeview import BagView, BoxView
+from gui.windows import AdditionalToolsWindow
 
 from events import EventManager
 
@@ -29,6 +29,9 @@ class App(tk.Tk):
     def init_widgets(self):
         c1 = CustomNotebook(self, self)
         c1.pack(side="top", fill="both", padx = 10, pady = 10)
+
+        a1 = AdditionalToolsWindow(self)
+
 
 if __name__ == "__main__":
     app = App()

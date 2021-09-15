@@ -27,3 +27,11 @@ class EventManager():
 
     def update(self, target: str, **kwargs):
         self.app.widgets[target].update(**kwargs)
+
+    def wipe(self, target: str,):
+        self.app.widgets[target].wipe()
+
+    # Special case for artifact entry
+    def set_back(self, target: str, **kwargs):
+        print('Here')
+        self.app.widgets[target].set_back(**kwargs)
