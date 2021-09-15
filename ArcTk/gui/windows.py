@@ -499,6 +499,132 @@ class ExportBoxWindow(tk.Tk):
 
         file_1 = PdfFile(bag_ls, site, inv)
 
+class AdditionalToolsWindow(tk.Tk):
+    def __init__(self, app):
+        super().__init__()
+        self.em = app.event_manager
+        self.con = app.connection
+        self.app = app
+
+        # Title
+        self.title("Artifact Tools")
+
+        # Theme
+        self.tk.call("source", "sun-valley.tcl")
+        self.tk.call("set_theme", "light")
+
+        # Valid box IDs
+        self.box_id_ls = list(chain(*self.con.get_bag_ids()))
+        print(self.box_id_ls)
+
+        self.init_widgets()
+    
+    def init_widgets(self):
+        # Card Preview Frame
+        self.cpf = ttk.LabelFrame(self, text="Card Preview Tools")
+        self.cpf.pack(padx = 10, pady = (5, 10))
+
+        # Labels
+        self.artifact_id = ttk.Label(self.cpf, text="Artifact ID", justify = tk.RIGHT)
+
+        # Labels to grid
+        self.artifact_id.grid(row = 0, column = 0, padx=(10, 10), pady = (10, 10), sticky='e')
+
+        # Entries
+        self.artifact_id_entry = ttk.Entry(self.cpf)
+
+        # Entries to grid
+        self.artifact_id_entry.grid(row = 0, column = 1,  padx=(10, 10), pady = (10, 10))
+
+        # Buttons
+        self.delete_artifact_button = ttk.Button(self.cpf, text="Delete Artifact", command = self.delete_artifact, style="Accent.TButton")
+
+        # Buttons to grid
+        self.delete_artifact_button.grid(row=1, column=0, columnspan = 2, padx = 10, pady = (10, 10), sticky="nsew")
+
+        # Frame
+        self.bsf = ttk.LabelFrame(self, text = "Bag Selection Tools")
+        self.bsf.pack(padx = 10, pady = (5, 10))
+
+        # Labels
+        self.bag_id = ttk.Label(self.bsf, text="Bag ID    ", justify = tk.RIGHT)
+        self.error_msg = ttk.Label(self.bsf, text="Error: Bag ID does not exist!", justify = tk.CENTER)
+        self.invalid_msg = ttk.Label(self.bsf, text="Error: Bag ID is invalid!", justify = tk.CENTER)
+
+        # Labels to grid
+        self.bag_id.grid(row = 0, column = 0, padx=(10, 10), pady = (10, 10), sticky='e')
+
+        # Entries
+        self.bag_id_entry = ttk.Entry(self.bsf)
+
+        # Entries to grid
+        self.bag_id_entry.grid(row = 0, column = 1,  padx=(10, 10), pady = (10, 10))
+
+        # Separators
+        self.separator = ttk.Separator(self.bsf)
+        self.separator.grid(row = 1, column = 0, columnspan = 4, padx = 10, sticky = 'ew')
+
+        # Buttons
+        self.select_button = ttk.Button(self.bsf, text="Set Bag as Active", command = self.select_bag)
+        self.delete_button = ttk.Button(self.bsf, text="Delete Bag", command = self.delete_bag, style="Accent.TButton")
+
+        # Buttons to grid
+        self.select_button.grid(row=2, column=0, columnspan = 2, padx = 10, pady = (10, 10), sticky="nsew")
+        self.delete_button.grid(row=3, column=0, columnspan = 2, padx = 10, pady = (0, 10), sticky="nsew")
+
+        # Bind entries
+        self.bind_entries()
+
+    def delete_artifact(self):
+        try:
+            id = int(self.artifact_id_entry.get())
+
+            self.em.update("card_preview_frame", id = id-1)
+        except:
+            pass
+
+    def select_bag(self):
+        pass
+
+    def delete_bag(self):
+        pass
+
+    def select_box(self):
+        self.error_msg.grid_forget()
+        self.invalid_msg.grid_forget()
+
+        try:
+            id = int(self.box_id_entry.get())
+
+            if id in self.box_id_ls:
+                self.con.set_active_box(id)
+                self.em.refresh('active_box_frame')
+                self.em.refresh('small_active_box_frame')
+                self.em.refresh('box_treeview')
+                self.em.refresh('bag_treeview')
+                self.em.refresh('card_preview_frame')
+                self.destroy()
+            else:
+                self.error_msg.grid(row = 3, column = 0, columnspan=2, padx=(10, 10), pady = (10, 10))
+        except ValueError:
+            self.invalid_msg.grid(row = 3, column = 0, columnspan=2, padx=(10, 10), pady = (10, 10))
+
+    def bind_entries(self):
+        self.box_id_entry.bind("<FocusOut>", self.validate_id) 
+        self.box_id_entry.bind("<FocusIn>", self.validate_id)  
+        self.box_id_entry.bind("<KeyRelease>", self.validate_id)
+
+    def validate_id(self, event):
+        module = event.widget
+
+        if module.get() == "" or module.get().isspace() or module.get() not in self.box_id_ls:
+            module.state(["!invalid"])
+        else:
+            try:
+                int(module.get())
+                module.state(["!invalid"])
+            except ValueError:
+                module.state(["invalid"])
                 
 
 

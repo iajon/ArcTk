@@ -4,6 +4,7 @@ from tkinter import ttk
 from lib.auto import *
 from lib.Classes import Artifact, Bag, Box
 from gui.treeview import BoxView, BagView
+import time
 
 class Menu(ttk.LabelFrame):
     def __init__(self, parent, app, text = "Utilities"):
@@ -18,10 +19,12 @@ class Menu(ttk.LabelFrame):
         self.set_active_box_button = ttk.Button(self, text="Set Active Box", command = self.set_active)
         self.add_new_box_button = ttk.Button(self, text="Add New Box (+)", command = self.add_new)
         self.export_box_data_button = ttk.Button(self, text="Export Box Data", command = self.export)
+        self.additional_tools_button = ttk.Button(self, text="Artifact Tools Window", command = self.additional_tools)
 
         self.set_active_box_button.pack(padx = 20, pady = (12, 5), fill = "both", expand = "True")#grid(row=0, column=0, padx = 30, pady = 10, sticky="nsew")
         self.add_new_box_button.pack(padx = 20, pady = 5, fill = "both", expand = "True")#grid(row=1, column=0, padx = 30, pady = (0, 10), sticky="nsew")
-        self.export_box_data_button.pack(padx = 20, pady = (5, 20), fill = "both", expand = "True")#grid(row=2, column=0, padx = 30, pady = (0, 10), sticky="nsew")
+        self.export_box_data_button.pack(padx = 20, pady = (5, 5), fill = "both", expand = "True")#grid(row=2, column=0, padx = 30, pady = (0, 10), sticky="nsew")
+        self.additional_tools_button.pack(padx = 20, pady = (5, 20), fill = "both", expand = "True")
 
     def set_active(self):
         self.em.initialize("set_active_box_window")
@@ -31,6 +34,9 @@ class Menu(ttk.LabelFrame):
 
     def export(self):
         self.em.initialize("export_box_window")
+    
+    def additional_tools(self):
+        self.em.initialize("additional_tools_window")
 
 class ActiveBox(ttk.LabelFrame):
     def __init__(self, parent, app, text = "Active Box"):
@@ -440,7 +446,7 @@ class ArtifactEntry(ttk.LabelFrame):
         self.con = app.connection
 
         #Autocomplete list
-        self.test_list = ('Debitage', 'Utilized Debitage', 'Biface', 'Hafted Biface - Side Notch', 'Hafted Biface - Corner Notch', 'Hafted Biface - Basal Notch', 'Hafted Biface - Stemmed', 'Hafted Biface - Lanceolate', 'Axe', 'Adze', 'Core', 'Drill', 'Uniface', 'Misc. Chipped Stone', 'Groundstone', 'Abrader', 'Mano', 'Metate', 'Nuttingstone', 'Hammerstone', 'Hematite', 'Lead', 'Ochre', 'Limonite', 'FCR Weight', 'Sandstone', 'Limestone', 'Unmodified Stone', 'Misc. Stone', 'Charcoal', 'Wood', 'Seed', 'Nutshell', 'Textile', 'Misc. Botanical', 'Animal Bone', 'Shell', 'Bead', 'Button', 'Misc. Faunal', 'Whiteware', 'Stoneware', 'Earthenware', 'Procelain', 'Other Historic', 'Unidentified', 'Brick', 'Mortar', 'Misc. Historic', 'Sherd', 'Sherd Body', 'Sherd Rim', 'Vessel', 'Pipe', 'Stem', 'Fired Clay', 'Other Prehistoric', 'Unidentified', 'Misc. Prehistoric', 'Sample', 'Nail', 'Utensil', 'Horseshoe', 'Button', 'Gun Parts', 'Bullet', 'Casing', 'Misc. Metal', 'Container Fragments', 'Whole Container', 'Bead', 'Button', 'Misc. Glass', 'Plastic', 'Rubber', 'Other Misc.', 'Unidentified')
+        self.test_list = ('Empty', 'Debitage', 'Utilized Debitage', 'Biface', 'Hafted Biface - Side Notch', 'Hafted Biface - Corner Notch', 'Hafted Biface - Basal Notch', 'Hafted Biface - Stemmed', 'Hafted Biface - Lanceolate', 'Axe', 'Adze', 'Core', 'Drill', 'Uniface', 'Misc. Chipped Stone', 'Groundstone', 'Abrader', 'Mano', 'Metate', 'Nuttingstone', 'Hammerstone', 'Hematite', 'Lead', 'Ochre', 'Limonite', 'FCR Weight', 'Sandstone', 'Limestone', 'Unmodified Stone', 'Misc. Stone', 'Charcoal', 'Wood', 'Seed', 'Nutshell', 'Textile', 'Misc. Botanical', 'Animal Bone', 'Shell', 'Bead', 'Button', 'Misc. Faunal', 'Whiteware', 'Stoneware', 'Earthenware', 'Procelain', 'Other Historic', 'Unidentified', 'Brick', 'Mortar', 'Misc. Historic', 'Sherd', 'Sherd Body', 'Sherd Rim', 'Vessel', 'Pipe', 'Stem', 'Fired Clay', 'Other Prehistoric', 'Unidentified', 'Misc. Prehistoric', 'Sample', 'Nail', 'Utensil', 'Horseshoe', 'Button', 'Gun Parts', 'Bullet', 'Casing', 'Misc. Metal', 'Container Fragments', 'Whole Container', 'Bead', 'Button', 'Misc. Glass', 'Plastic', 'Rubber', 'Other Misc.', 'Unidentified')
 
         self.init_widgets()
 
@@ -638,6 +644,8 @@ class CardPreview(ttk.LabelFrame):
             self.frontvar.set(f"{site_num}Prov:                   \nCat#:                  \nMisc:                   \nName:                  \nDate:                   ")
 
     def load_back(self, data):
+        data['id']=len(self.b_data)
+
         self.b_data.append(data)
         if data['ARTIFACT_COUNT'] == "" or data['ARTIFACT_COUNT'].isspace():
             self.b_string.append(self.format_back(f"{data['ARTIFACT_TYPE']}: {data['ARTIFACT_WEIGHT']}g"))
@@ -676,6 +684,31 @@ class CardPreview(ttk.LabelFrame):
                 row_ls[i] = '      ' + row_ls[i]
 
         return '\n'.join(row_ls).replace('@', ' ')
+    
+    def update(self, id = 0):
+        new_data = self.b_data.copy()
+
+        # Pop id from list
+        flag = False
+        for i in range(len(new_data)):
+            if flag == False:
+                if int(new_data[i]['id']) == int(id):
+                    new_data.pop(i)
+                    flag = True
+        print(new_data)
+        
+        # Reset ids
+        #for i in range(len(self.b_data)):
+            #self.b_data[i]['id'] = i
+        self.b_data = []
+        self.b_string = []
+        self.backvar.set("Artifact #1: (n) Ng     ")
+
+        for i in new_data:
+            self.load_back(i)
+            
+
+
 
     def format_back(self, string):
         # This number must be 6 more than the line_length of the format_front function

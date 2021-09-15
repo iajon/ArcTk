@@ -118,6 +118,13 @@ class Connection:
                             FROM boxes""")
         
         return self.cur.fetchall()
+    
+    def get_bag_ids(self):
+        self.cur.execute("""SELECT bags.bag_id FROM bags
+                            INNER JOIN boxes ON boxes.box_id = bags.box_id
+                            WHERE boxes.box_active = 1""")
+        
+        return self.cur.fetchall()
 
     def get_artifacts(self):
         # Select all artifacts
