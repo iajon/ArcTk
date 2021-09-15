@@ -65,7 +65,6 @@ class Connection:
         ls = []
         for i in self.cur.fetchall():
             ls.append(list(i))
-        print(ls)
         
         # Append to ids
         for i in ls:
@@ -83,8 +82,6 @@ class Connection:
                               WHERE bags.bag_id = ?;""", (id,))
             for i in self.cur.fetchall():
                 bag_data.append(list(i))
-        
-        print('This' + bag_data)
 
         return(bag_data)
 
@@ -109,22 +106,20 @@ class Connection:
 
         for bag in ls:
             if flag == False:
-                if bag[9] not in id_ls:
-                    id_ls.append(bag[9])
+                if bag[10] != 0:
+                    if bag[9] not in id_ls:
+                        id_ls.append(bag[9])
 
-                    if cell == 0:
-                        row_num += 1
-                        line_num += bag[10]
+                        if cell == 0:
+                            row_num += 1
+                            line_num += bag[10]
 
-                    elif cell >= 4:
-                        cell = -1
-                        if line_num >= target:
-                            flag = True
-                    cell += 1
-        print(line_num)
-        print(row_num)
+                        elif cell >= 4:
+                            cell = -1
+                            if line_num >= target:
+                                flag = True
+                        cell += 1
         limit = row_num * 5
-        print(limit)
 
         if flag == True:
             return self.get_pdf_rows(limit)
@@ -142,7 +137,6 @@ class Connection:
         ls = []
         for i in self.cur.fetchall():
             ls.append(list(i))
-            print(ls[-1])
         
         return ls
     
@@ -152,11 +146,6 @@ class Connection:
                             WHERE bag_id = ?;""",
                             (id,))
         self.con.commit()
-
-
-
-
-
 
     def update_box(self, box, target = "active"):
         if target == "active":

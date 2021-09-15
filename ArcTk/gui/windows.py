@@ -437,7 +437,7 @@ class ExportBoxWindow(tk.Tk):
         else:
             filename = site + '_001'
 
-        writer = pd.ExcelWriter(f'{filename}.xlsx', engine='xlsxwriter')
+        writer = pd.ExcelWriter(f'file_output\{filename}.xlsx', engine='xlsxwriter')
         box_df.to_excel(writer, 'Sheet1', index=False)
         bags_df.to_excel(writer, 'Sheet1', startrow = 4, index = False)
         art_totals.to_excel(writer, 'Sheet1', startcol = 10, startrow = 4, index = False)

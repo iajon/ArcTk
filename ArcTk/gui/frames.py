@@ -304,7 +304,7 @@ class SmallActiveBox(ttk.LabelFrame):
                 i.delete(0, tk.END)
                 i.insert(0, str(j))
         except:
-            print("FAILED: fill_labels - small_active_box")
+            pass
         # Disable entries
         self.disable()
         
@@ -443,7 +443,6 @@ class BagEntry(ttk.LabelFrame):
 
     def set(self, id = 0):
         data = self.con.get_bag_by_id(id)
-        print(data)
 
         for i, j in zip(self.entry_ls, data):
             i.delete(0, tk.END)
@@ -514,7 +513,6 @@ class ArtifactEntry(ttk.LabelFrame):
         invalid = False
         if data['ARTIFACT_TYPE'] == "" or data['ARTIFACT_TYPE'].isspace():
             invalid = True
-            print('1')
 
         if data['ARTIFACT_COUNT'] == "" or data['ARTIFACT_COUNT'].isspace():
             pass
@@ -523,17 +521,14 @@ class ArtifactEntry(ttk.LabelFrame):
                 int(data['ARTIFACT_COUNT'])
             except:
                 invalid = True
-                print('2')
 
         if data['ARTIFACT_WEIGHT'] == "" or data['ARTIFACT_WEIGHT'].isspace():
             invalid = True
-            print('3')
         else:
             try:
                 float(data['ARTIFACT_WEIGHT'])
             except:
                 invalid = True
-                print('4')
         
         if invalid == False:
             # Send data to card
@@ -665,7 +660,6 @@ class CardPreview(ttk.LabelFrame):
 
     def load_back(self, data):
         data['id']=len(self.b_data)
-        print(f"Data: {data}")
 
         self.b_data.append(data)
         if data['ARTIFACT_COUNT'] == "" or data['ARTIFACT_COUNT'].isspace():
@@ -757,7 +751,6 @@ class CardPreview(ttk.LabelFrame):
             self.load_back(dataset)
     
     def set_back(self, id = 0):
-        print('pls')
 
         data = self.con.get_artifact_by_id(id)
         new_data = []
@@ -769,8 +762,6 @@ class CardPreview(ttk.LabelFrame):
         self.b_data = []
         self.b_string = []
         self.backvar.set("Artifact #1: (n) Ng     ")
-
-        print(new_data)
 
         for i in new_data:
             self.load_back(i)
@@ -806,7 +797,6 @@ class SubmitButton(ttk.LabelFrame):
 
     def submit(self):
         ls = self.em.get('card_preview_frame')
-        print(ls)
         artifact_ls = []
 
         if len(ls[1]) == 0:

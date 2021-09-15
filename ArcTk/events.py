@@ -35,5 +35,4 @@ class EventManager():
 
     # Special case for artifact entry
     def set_back(self, target: str, **kwargs):
-        print('Here')
         self.app.widgets[target].set_back(**kwargs)

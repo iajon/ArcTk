@@ -71,7 +71,6 @@ class Bag:
 
         for keyword, value in properties.items():
             setattr(self, keyword, value)
-        print(self.__dict__)
     
         if 'Date' in self.__dict__.keys():
             self.format_date()
