@@ -1,10 +1,15 @@
 import tkinter as tk
 from tkinter import ttk
+import pandas as pd
+import random
 
 from lib.auto import *
 from lib.Classes import Artifact, Bag, Box
+from lib.PdfFunctions import PdfFile
+import lib.ExcelFunctions as xlf
 from gui.treeview import BoxView, BagView
-import time
+
+
 
 class Menu(ttk.LabelFrame):
     def __init__(self, parent, app, text = "Utilities"):
@@ -13,18 +18,20 @@ class Menu(ttk.LabelFrame):
         self.em = app.event_manager
         self.con = app.connection
 
+        self.pdf_counter = 0
+
         self.init_widgets()
     
     def init_widgets(self):
         self.set_active_box_button = ttk.Button(self, text="Set Active Box", command = self.set_active)
         self.add_new_box_button = ttk.Button(self, text="Add New Box (+)", command = self.add_new)
-        self.export_box_data_button = ttk.Button(self, text="Export Box Data", command = self.export)
+        self.export_box_data_button = ttk.Button(self, text="Export Box Data", command = self.export, style = "Accent.TButton")
         self.additional_tools_button = ttk.Button(self, text="Artifact Tools Window", command = self.additional_tools)
 
-        self.set_active_box_button.pack(padx = 20, pady = (12, 5), fill = "both", expand = "True")#grid(row=0, column=0, padx = 30, pady = 10, sticky="nsew")
-        self.add_new_box_button.pack(padx = 20, pady = 5, fill = "both", expand = "True")#grid(row=1, column=0, padx = 30, pady = (0, 10), sticky="nsew")
-        self.export_box_data_button.pack(padx = 20, pady = (5, 5), fill = "both", expand = "True")#grid(row=2, column=0, padx = 30, pady = (0, 10), sticky="nsew")
-        self.additional_tools_button.pack(padx = 20, pady = (5, 20), fill = "both", expand = "True")
+        self.additional_tools_button.pack(padx = 20, pady = (12, 5), fill = "both", expand = "True")
+        self.set_active_box_button.pack(padx = 20, pady = (5, 5), fill = "both", expand = "True")
+        self.add_new_box_button.pack(padx = 20, pady = 5, fill = "both", expand = "True")
+        self.export_box_data_button.pack(padx = 20, pady = (5, 5), fill = "both", expand = "True")
 
     def set_active(self):
         self.em.initialize("set_active_box_window")
@@ -37,7 +44,7 @@ class Menu(ttk.LabelFrame):
     
     def additional_tools(self):
         self.em.initialize("additional_tools_window")
-
+        
 class ActiveBox(ttk.LabelFrame):
     def __init__(self, parent, app, text = "Active Box"):
         super().__init__(parent, text = text)
@@ -441,7 +448,7 @@ class BagEntry(ttk.LabelFrame):
         for i, j in zip(self.entry_ls, data):
             i.delete(0, tk.END)
             i.insert(0, j)
-        self.holdover_var.set(0)
+        self.holdover_var.set(1)
         self.to_card()
 
     def wipe(self):
@@ -809,20 +816,66 @@ class SubmitButton(ttk.LabelFrame):
         else:
             for i in ls[1]:
                 artifact_ls.append(Artifact(**i))
+
+        ls[0]['artifact_ls'] = artifact_ls
+
+        bag = Bag(**ls[0])
         try:
-            ls[0]['artifact_ls'] = artifact_ls
-
-            bag = Bag(**ls[0])
-
             if self.is_update == True:
                 self.con.delete_bag(self.update_id)
-
-            self.con.insert_bag(bag)
-
-            self.em.refresh('card_preview_frame')
-            self.em.refresh('bag_treeview')
         except:
-            print('Failed')
+            print('Could not delete')
+
+        self.con.insert_bag(bag)
+
+        self.em.refresh('card_preview_frame')
+        self.em.refresh('bag_treeview')
+
+        self.em.refresh('additional_tools_window')
+
+        # PDF
+        data = self.con.get_pdf_view()
+        if data != False:
+            self.to_pdf()
+            self.em.initialize('pdf_notification_window')
+
+    def to_pdf(self):
+        bag_data = self.con.get_pdf_view()
+        bag_ls = []
+        pd.set_option('display.max_colwidth', None)
+
+        rand_ls = []
+        ids = []
+        flag = False
+        for row in bag_data:
+            if row[7] not in ids:
+                ids.append(row[7])
+                if flag == True:
+                    bag_props['artifact_ls'] = artifact_ls.copy()
+                    bag_ls.append(Bag(**bag_props.copy()))
+                artifact_ls = []
+                bag_props = {'Site': row[0],
+                            'Prov': row[1], 
+                            'Cat#': row[2], 
+                            'Misc': row[3], 
+                            'Name': row[4], 
+                            'Date': row[5],
+                            'artifact_ls': []}
+                flag = True
+            
+            # Add artifact to list             
+            artifact_ls.append(Artifact(**{'ARTIFACT_TYPE': row[15], 'ARTIFACT_COUNT': row[10], 'ARTIFACT_WEIGHT': row[11]}))
+        
+        # Append final bag
+        bag_props['artifact_ls'] = artifact_ls.copy()
+        bag_ls.append(Bag(**bag_props.copy()))
+
+        filename = random.randint(100000000, 999999999)
+
+        for id in ids:
+            self.con.update_carded(id)
+
+        file1 = PdfFile(bag_ls, 'Cards', str(filename))
         
     def set(self, enabled = "False"):
         if enabled:

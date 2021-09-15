@@ -34,14 +34,14 @@ class Connection:
         self.cur.execute("UPDATE bags SET bag_active = 0;")
 
         # Insert into bags table
-        self.cur.execute("""INSERT INTO bags (bag_prov, bag_cat_num, bag_other, bag_name, bag_date, bag_active, box_id) 
+        self.cur.execute("""INSERT INTO bags (bag_prov, bag_cat_num, bag_other, bag_name, bag_date, bag_active, box_id, newln_ct) 
                         VALUES (?, ?, ?, ?, ?, 1,
-                        (SELECT box_id FROM boxes WHERE box_active = 1));""",
-                        (bag.prov, bag.cat_num, bag.other, bag.name, bag.date))
+                        (SELECT box_id FROM boxes WHERE box_active = 1), ?);""",
+                        (bag.prov, bag.cat_num, bag.other, bag.name, bag.date, bag.card.newln_ct))
         
         
         # Insert into artifacts table
-        for artifact in bag.artifact_ls:
+        for artifact in bag.__dict__['artifact_ls']:
             try:
                 self.cur.execute("""INSERT INTO artifacts (artifact_count, artifact_weight, bag_id, artifact_type_id) 
                                 VALUES (?, ?,
@@ -57,6 +57,106 @@ class Connection:
                                 (artifact.ARTIFACT_COUNT, artifact.ARTIFACT_WEIGHT, 'Unidentified'))
         
         self.con.commit()
+    
+    def get_pdf_collate_view(self):
+        self.cur.execute("SELECT * FROM pdf_collate_view;")
+
+        # Get all as list
+        ls = []
+        for i in self.cur.fetchall():
+            ls.append(list(i))
+        print(ls)
+        
+        # Append to ids
+        for i in ls:
+            ids.append(ls[1])
+        # Set ids as carded
+        for id in ids:
+            self.cur.execute("""UPDATE bags SET carded = 1
+                                WHERE bag_id = ?;""",(id,))
+
+
+        # Grab bags
+        bag_data = []
+        for id in ids:
+            self.cur.execute("""SELECT * FROM full_box_view
+                              WHERE bags.bag_id = ?;""", (id,))
+            for i in self.cur.fetchall():
+                bag_data.append(list(i))
+        
+        print('This' + bag_data)
+
+        return(bag_data)
+
+
+
+    
+    def get_pdf_view(self):
+        self.cur.execute("SELECT * FROM full_box_view;")
+
+        ls = []
+        for i in self.cur.fetchall():
+            ls.append(list(i))
+        
+        target = 15
+        flag = False
+        line_num = 0 # By line
+        row_num = 0 # By one
+        cell = 0 # By iteration
+        newln_ls = []
+        id_ls = []
+
+
+        for bag in ls:
+            if flag == False:
+                if bag[9] not in id_ls:
+                    id_ls.append(bag[9])
+
+                    if cell == 0:
+                        row_num += 1
+                        line_num += bag[10]
+
+                    elif cell >= 4:
+                        cell = -1
+                        if line_num >= target:
+                            flag = True
+                    cell += 1
+        print(line_num)
+        print(row_num)
+        limit = row_num * 5
+        print(limit)
+
+        if flag == True:
+            return self.get_pdf_rows(limit)
+        else:
+            return False
+
+    def get_pdf_rows(self, limit):
+        self.cur.execute("""SELECT * FROM (SELECT * FROM pdf_view LIMIT 0,?) pdf_view
+                            LEFT JOIN 
+                            artifacts 
+                            ON artifacts.bag_id = pdf_view.bag_id
+                            LEFT JOIN 
+                            artifact_types 
+                            ON artifact_types.artifact_type_id = artifacts.artifact_type_id""", (limit,))
+        ls = []
+        for i in self.cur.fetchall():
+            ls.append(list(i))
+            print(ls[-1])
+        
+        return ls
+    
+    def update_carded(self, id):
+        self.cur.execute("""UPDATE bags
+                            SET carded = 1
+                            WHERE bag_id = ?;""",
+                            (id,))
+        self.con.commit()
+
+
+
+
+
 
     def update_box(self, box, target = "active"):
         if target == "active":
@@ -184,10 +284,8 @@ class Connection:
         # Return selection
         ls = []
         for i in self.cur.fetchall():
-            print(list(i))
             ls.append(list(i))
         
-        print(ls)
         return ls
 
     def delete_bag(self, id):

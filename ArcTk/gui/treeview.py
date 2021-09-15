@@ -26,7 +26,7 @@ class BagView(ttk.Treeview):
         self.column("CatNum", anchor = "w", width=100)
         self.column("Other", anchor = "w", width=100)
         self.column("Name", anchor = "w", width=100)
-        self.column("Date", anchor = "w", width=130)
+        self.column("Date", anchor = "w", width=100)
         self.column("Type", anchor = "w", width=150, minwidth = 150)
         self.column("Count", anchor = "center", width=60, minwidth = 60)
         self.column("Weight", anchor = "center", width=80)

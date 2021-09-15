@@ -31,6 +31,7 @@ class App(tk.Tk):
         c1.pack(side="top", fill="both", padx = 10, pady = 10)
 
         a1 = AdditionalToolsWindow(self)
+        self.widgets['additional_tools_window'] = a1
 
 
 if __name__ == "__main__":

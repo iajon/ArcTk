@@ -71,6 +71,7 @@ class Bag:
 
         for keyword, value in properties.items():
             setattr(self, keyword, value)
+        print(self.__dict__)
     
         if 'Date' in self.__dict__.keys():
             self.format_date()
@@ -112,22 +113,25 @@ class Card:
         self.load_back()
         self.level()
         
-        self.newln_ct = self.front_ct
+        self.card_front += ' \n '
+        self.card_back += ' \n '
+        self.newln_ct = self.front_ct + 1
 
     def load_front(self):
         prefixes = []
         data = []
 
-        bag_dict = self.bag.__dict__
+        bag_dict = self.bag.__dict__.copy()
         bag_dict.pop('artifact_ls', None)
 
         for k, v in bag_dict.items():
             if not isinstance(v, list):
-                if v == '' or v.isspace():
-                    pass
-                else:
-                    prefixes.append(k + ': ')
-                    data.append(str(v))
+                if (v):
+                    if v == '' or v.isspace():
+                        pass
+                    else:
+                        prefixes.append(k + ': ')
+                        data.append(str(v))
         
         rows = []
         ct = 0

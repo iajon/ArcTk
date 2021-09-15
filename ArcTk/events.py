@@ -1,4 +1,4 @@
-from gui.windows import AdditionalToolsWindow, BoxEntryWindow, ExportBoxWindow, SetActiveBoxWindow
+from gui.windows import AdditionalToolsWindow, BoxEntryWindow, ExportBoxWindow, PdfNotificationWindow, SetActiveBoxWindow
 
 
 class EventManager():
@@ -15,6 +15,8 @@ class EventManager():
             self.app.widgets[target] = ExportBoxWindow(self.app)
         if target == "additional_tools_window":
             self.app.widgets[target] = AdditionalToolsWindow(self.app)
+        if target == "pdf_notification_window":
+            self.app.widgets[target] = PdfNotificationWindow(self.app)
 
     def get(self, target: str):
         return self.app.widgets[target].get()

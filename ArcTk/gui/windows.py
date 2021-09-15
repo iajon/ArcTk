@@ -340,20 +340,14 @@ class ExportBoxWindow(tk.Tk):
                     'date': '',
                     'artifact_ls': []}
 
-        current_id = 0
+        ids = []
         flag = False
         for row in bag_data:
-            # If new bag id
-            if current_id != row[-1]:
-                if flag == False:
-                    flag = True    
-                else:
-                    # Append bag
-                    bag_props['artifact_ls'] = artifact_ls
+            if row[-1] not in ids:
+                ids.append(row[-1])
+                if flag == True:
+                    bag_props['artifact_ls'] = artifact_ls.copy()
                     bag_ls.append(Bag(**bag_props.copy()))
-
-                # Clear bag data/set id
-                current_id = row[-1]
                 artifact_ls = []
                 bag_props = {'Site': box_data[0],
                             'Prov': row[0], 
@@ -362,25 +356,19 @@ class ExportBoxWindow(tk.Tk):
                             'Name': row[3], 
                             'Date': row[4],
                             'artifact_ls': []}
-
+                flag = True
+            
             # Add artifact to list             
             artifact_ls.append(Artifact(**{'ARTIFACT_TYPE': row[5], 'ARTIFACT_COUNT': row[6], 'ARTIFACT_WEIGHT': row[7]}))
         
         # Append final bag
-        bag_props['artifact_ls'] = artifact_ls
+        bag_props['artifact_ls'] = artifact_ls.copy()
         bag_ls.append(Bag(**bag_props.copy()))
 
         # Prep for output
         sitenum = box_data[0]
         invnum = box_data[2]
 
-        # Uncomment to print list of bags
-        """
-        for i in bag_ls:
-            print(f"Bag info: {i.__dict__}")
-            for x in i.artifact_ls:
-                print(x.__dict__)
-        """
         df = self.con.sql_to_excel()
         art_tot = xlf.get_artifact_df(df.iloc[:, 15:18])
 
@@ -666,7 +654,35 @@ class AdditionalToolsWindow(tk.Tk):
                 module.state(["!invalid"])
             except ValueError:
                 module.state(["invalid"])
+
+    def refresh(self):
+        self.cancel_edits()
                 
+class PdfNotificationWindow(tk.Tk):
+    def __init__(self, app):
+        super().__init__()
+        self.em = app.event_manager
+        self.con = app.connection
+        self.app = app
 
+        # Title
+        self.title("Notice")
 
+        # Theme
+        self.tk.call("source", "sun-valley.tcl")
+        self.tk.call("set_theme", "light")
 
+        self.init_widgets()
+    
+    def init_widgets(self):
+        # Card Preview Frame
+        self.cpf = ttk.LabelFrame(self)
+        self.cpf.pack(padx = 10, pady = (5, 10))
+
+        # Labels
+        self.notice_label= ttk.Label(self.cpf, text="A set of cards has been exported to a PDF", justify = tk.RIGHT)
+
+        # Labels to grid
+        self.notice_label.grid(row = 0, column = 0, padx=(10, 10), pady = (10, 10), sticky='e')
+
+        
