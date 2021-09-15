@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
 
-from gui.tabs import Home, ProcessArtifacts, AdditionalTools
+from gui.tabs import Home, ProcessArtifacts
 
 class CustomNotebook(ttk.Notebook):
     def __init__(self, parent, app):
@@ -21,7 +21,3 @@ class CustomNotebook(ttk.Notebook):
         # Process Artifacts Tab
         self.process_artifacts_tab = ProcessArtifacts(self, self.app)
         self.add(self.process_artifacts_tab, text = "Process Artifacts")
-
-        # Additional Artifact Tools Tab
-        self.process_artifacts_tab = ProcessArtifacts(self, self.app)
-        self.add(self.process_artifacts_tab, text = "Additional Tools")
