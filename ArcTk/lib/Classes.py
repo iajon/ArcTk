@@ -105,127 +105,125 @@ class Card:
 
     def __init__(self, bag):
         self.newln_ct = 0
-        d = gf.copy_dict(bag.__dict__, ['artifact_ls'])
-        ls = self.dict_to_ls(d)
-        self.pref = ls[1]
-        self.front_ls = ls[0]
-        self.back_ls = []
+        self.bag = bag
+        self.artifacts = self.bag.artifact_ls
 
-        if type(bag.artifact_ls) == dict:
-            bag.artifact_ls = [bag.artifact_ls]
-        for i in bag.artifact_ls:
-            self.back_ls.append(i.string)
-
-        ls = self.format(self.front_ls, False)
-        self.front_ls = ls[0]
-        self.f_ct = ls[1]
-        self.f_pre = ls[2]
-
-        ls = self.format(self.back_ls, True)
-        self.back_ls = ls[0]
-        self.b_ct = ls[1]
-        self.b_pre = ls[2]
-
+        self.load_front()
+        self.load_back()
         self.level()
-
-        self.front_str = gf.replace_chars(''.join(self.front_ls))
-
-        self.back_str = gf.replace_chars(''.join(self.back_ls))
-
-    def format(self, ls, back):
-        return_ls = []
-        ct = 0
-
-        for i in ls:
-            pre_ls = []
-            temp_ls = []
-            temp_str = ''
-            return_str = ''
-            split_ls = i.split(' ')
-
-            flag = True
-            for j in split_ls:
-                
-                temp_str = ' '.join(temp_ls)
-
-                if len(temp_str) + len(j) >= 28:
-                    return_str += f"{temp_str}\n"
-                    temp_ls = ['      ']
-                    ct += 1
-                    flag = True
-                temp_ls.append(j)
-                if ':' in ' '.join(temp_ls):
-                    pre_ls.append(' '.join(temp_ls))
-                    for x in range(22):
-                        pre_ls[-1] += ' '
-                    flag = False
-
-            return_str += f"{' '.join(temp_ls)}\n"
-            return_ls.append(return_str)
-            ct += 1
-        # for spacing
-        if back == True:
-            return_ls.insert(0, ' \n')
-            ct += 1
-        else:
-            return_ls.append(' \n')
-            ct += 1
-
-        try:
-            return [return_ls, ct, pre_ls[0]]
-        except:
-            return [return_ls, ct, ['g']]
-    
-    def level(self):
-        diff = self.f_ct - self.b_ct
-
-        if diff > 0:
-            for i in range(diff):
-                if self.back_ls:
-                    self.back_ls[-1] += '\n'
-                else:
-                    self.back_ls.append('\n')
-            self.newln_ct = self.f_ct
-
-        elif diff < 0:
-            for i in range(abs(diff)):
-                if self.front_ls:
-                    self.front_ls[-1] += '\n'
-                else:
-                    self.front_ls.append('\n')
-            self.newln_ct = self.b_ct
-        else:
-            pass
-
-    # Returns list with formatted prefixes
-    def dict_to_ls(self, dictionary):
-        temp_ls = []
-        temp_ls_2 = []
-
-        dictionary.pop('BAG_INDEX', None)
-        for k, v in dictionary.items():
-            if v != '':
-                temp_ls_2.append("%s                     " % self.format_prefix(k))
-                temp_ls.append("%s %s" % (self.format_prefix(k), v))
-                if temp_ls[-1][-1] != ';':
-                    temp_ls[-1]+= ';'
-        return [temp_ls, temp_ls_2]
-
-    #Returns formatted card label prefix string according to character limit + colon 
-    def format_prefix(self, string):
-        char_limit = 5
-
-        if len(string) > char_limit:
-            string = string[0:5]
-
-        string += ':'
-        for i in range(char_limit - len(string) + 1):
-            string += ' '
         
-        return string
+        self.newln_ct = self.front_ct
 
+    def load_front(self):
+        prefixes = []
+        data = []
 
+        bag_dict = self.bag.__dict__
+        bag_dict.pop('artifact_ls', None)
 
+        for k, v in bag_dict.items():
+            if not isinstance(v, list):
+                if v == '' or v.isspace():
+                    pass
+                else:
+                    prefixes.append(k + ': ')
+                    data.append(str(v))
+        
+        rows = []
+        ct = 0
+        for i, j in zip(prefixes, data):
+            values = self.format_front(i, j)
+            rows.append(values[0])
+            ct += values[1]
+        
+        self.front_ct = ct
+        self.card_front = '\n'.join(rows)
+    
+    def load_back(self):
+        rows = []
+        ct = 0
+        for artifact in self.artifacts:
+            data = artifact.__dict__
+            if 'BLANK' not in data:
+                if str(data['ARTIFACT_COUNT']) == "" or str(data['ARTIFACT_COUNT']).isspace():
+                    values = self.format_back(f"{data['ARTIFACT_TYPE']}: {data['ARTIFACT_WEIGHT']}g")
+                    rows.append(values[0])
+                    ct += values[1]
+                else:
+                    values = self.format_back(f"{data['ARTIFACT_TYPE']}: ({data['ARTIFACT_COUNT']}) {data['ARTIFACT_WEIGHT']}g")
+                    rows.append(values[0])
+                    ct += values[1]
+
+        self.back_ct = ct
+        self.card_back = '\n'.join(rows)
+    
+    
+    def format_front(self, prefix, string ):
+        line_length = 18
+
+        row = ''
+        row_ls = []
+
+        split = string.split()
+        for i in range(len(split)-1):
+            split[i] += '@'
+
+        for word in split:
+            if len(row) + len(word) - 1 > line_length:
+                row_ls.append(row[0:-1])
+                row = word
+            else:
+                row += word
+        
+        # Append final row
+        spacing = ''
+        for i in range(line_length - len(row)):
+            spacing += '@'
+        row_ls.append(row +  spacing)
+
+        for i in range(len(row_ls)):
+            if i == 0:
+                row_ls[i] = prefix + row_ls[i]
+            else:
+                row_ls[i] = '      ' + row_ls[i]
+
+        return ['\n'.join(row_ls).replace('@', ' '), len(row_ls)]
+
+    def format_back(self, string):
+        # This number must be 6 more than the line_length of the format_front function
+        line_length = 24
+
+        row = ''
+        row_ls = []
+
+        split = string.split()
+        for i in range(len(split)-1):
+            split[i] += '@'
+
+        for word in split:
+            if len(row) + len(word) - 1 > line_length:
+                row_ls.append(row[0:-1])
+                row = word
+            else:
+                row += word
+        
+        # Append final row
+        spacing = ''
+        for i in range(line_length - len(row)):
+            spacing += '@'
+        row_ls.append(row +  spacing)
+
+        return ['\n'.join(row_ls).replace('@', ' '), len(row_ls)]
+
+    def level(self):
+        if self.front_ct > self.back_ct:
+            for i in range(self.front_ct-self.back_ct):
+                self.card_back += '\n '
+                self.back_ct = self.front_ct
+        elif self.back_ct > self.front_ct:
+            for i in range(self.back_ct-self.front_ct):
+                self.card_front += '\n '
+                self.front_ct = self.back_ct
 
 
 
