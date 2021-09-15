@@ -1,5 +1,6 @@
 import sqlite3 as sl
 import os.path
+import pandas as pd
 
 class Connection:
     def __init__(self, filename):
@@ -178,6 +179,11 @@ class Connection:
         
         # Return selection
         return self.cur.fetchall()
+
+    def sql_to_excel(self):
+        df = pd.read_sql_query("SELECT * FROM export_view", self.con)
+
+        return df
         
 def main():
     pass
