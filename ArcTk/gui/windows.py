@@ -1,3 +1,4 @@
+from enum import Flag
 from lib.PdfFunctions import PdfFile
 import tkinter as tk
 from tkinter import ttk
@@ -7,6 +8,9 @@ from itertools import chain
 from lib.Classes import Box, Bag, Artifact
 import lib.GeneralFunctions as gf
 import lib.HtmlFunctions as hf
+import lib.ExcelFunctions as xlf
+
+import pandas as pd
 
 class BoxEntryWindow(tk.Tk):
     def __init__(self, app):
@@ -110,7 +114,7 @@ class BoxEntryWindow(tk.Tk):
         for i in self.entry_ls:
             temp = i.get()
             if temp.isspace() or temp == "":
-                box_ls.append("N/A")
+                box_ls.append("None")
             else:
                 box_ls.append(temp)
 
@@ -125,7 +129,7 @@ class BoxEntryWindow(tk.Tk):
                 'ptype' : box_ls[8],
                 'contract' : box_ls[9]}
 
-        if dict['site_num'] == "N/A":
+        if dict['site_num'] == "None":
             dict['site_num'] = "23OTHER"
         box = Box(**dict)
 
@@ -252,7 +256,7 @@ class ExportBoxWindow(tk.Tk):
         warning_text = "*Please verify that the appropriate box is selected."
         self.warnings = ttk.Label(self.frame, text=warning_text)
 
-        self.site_num = ttk.Label(self.frame, text="Site Name")
+        self.site_num = ttk.Label(self.frame, text="Site Number")
         self.oin = ttk.Label(self.frame, text="Old Inventory Number(s)")
 
         self.bag_count = ttk.Label(self.frame, text=f"Bag Total: {self.con.get_count()} Bags")
@@ -262,12 +266,12 @@ class ExportBoxWindow(tk.Tk):
         self.site_num_entry = ttk.Entry(self.frame)
         self.oin_entry = ttk.Entry(self.frame)
 
-        selection = self.con.get_box(target = "active")[0]
+        selection = self.con.get_active_box()
         self.site_num_entry.delete(0, tk.END)
-        self.site_num_entry.insert(0, selection[0])
+        self.site_num_entry.insert(0, selection[0][2])
 
         self.oin_entry.delete(0, tk.END)
-        self.oin_entry.insert(0, selection[4])
+        self.oin_entry.insert(0, selection[0][4])
 
         self.site_num_entry['state'] = 'disabled'
         self.oin_entry['state'] = 'disabled'
@@ -315,6 +319,7 @@ class ExportBoxWindow(tk.Tk):
         self.export_button.grid(row=1, column=0, columnspan = 3, padx = 10, pady = (10, 10), sticky="nsew")
 
     def export_box(self):
+        pd.set_option('display.max_colwidth', None)
         selection = self.con.get_box_for_export()
 
         # Begin filtering
@@ -376,18 +381,102 @@ class ExportBoxWindow(tk.Tk):
             for x in i.artifact_ls:
                 print(x.__dict__)
         """
+        df = self.con.sql_to_excel()
+        art_tot = xlf.get_artifact_df(df.iloc[:, 15:18])
 
         if (self.excel_var.get()):
-            self.export_to_excel(bag_ls, sitenum, invnum)
+            self.export_to_excel(bag_ls, sitenum, invnum, art_tot)
         if (self.html_var.get()):
-            self.export_to_html(bag_ls, sitenum, invnum)
+            self.export_to_html(bag_ls, sitenum, invnum, art_tot)
         if (self.pdf_var.get()):
             self.export_to_pdf(bag_ls, sitenum, invnum)
     
-    def export_to_excel(self, bag_ls, site, inv):
-        pass
+    def export_to_excel(self, bag_ls, site, inv, art_tot):
+        pd.set_option('display.max_colwidth', None)
+        df = self.con.sql_to_excel()
+        
+        # Artifact Totals
+        art_totals = art_tot
 
-    def export_to_html(self, bag_ls, site, inv):
+        #Box Dataframe
+        box_df = df.iloc[:1, 0: 10]
+        box_df.rename(columns={'site_number':'Site Number',
+                               'site_name':'Site Name',
+                               'box_oin':'Old Inventory Number(s)',
+                               'box_sn':'Shelving Number',
+                               'box_in':'Identification Number',
+                               'box_collectors':'Collectors',
+                               'box_years':'Years',
+                               'box_pname':'Project Name',
+                               'box_ptype':'Project Type',
+                               'box_contract':'Contract No.'}, inplace=True)
+
+        # Bag Dataframe
+        bags_df = df.iloc[:, 10:]
+        bags_df.insert(loc=0, column='Bag Info', value='')
+        
+        #Fix rows that have duplicate ids
+        current_id = -1
+        flag = False
+        for i, row in bags_df.iterrows():
+            
+            if row['bag_id'] == current_id:
+                if flag == False:
+                    bags_df.at[i-1, 'Bag Info'] = 'Multiple Artifact Types'
+                bags_df.at[i, 'bag_prov'] = ''
+                bags_df.at[i, 'bag_cat_num'] = ''
+                bags_df.at[i, 'bag_other'] = ''
+                bags_df.at[i, 'bag_name'] = ''
+                bags_df.at[i, 'bag_date'] = ''
+                flag = True
+            else:
+                current_id = row['bag_id']
+                flag = False
+        
+        bags_df.rename(columns={'bag_prov':'Provenience',
+                                'bag_cat_num':'Catalogue Numbers',
+                                'bag_other':'Other Labels',
+                                'bag_name':'Names',
+                                'bag_date':'Dates',
+                                'artifact_type_name':'Artifact Type',
+                                'artifact_count':'Count',
+                                'artifact_weight':'Weight (g)'}, inplace=True)
+        bags_df.drop(columns=['bag_id'], inplace=True)
+
+        # Write to Excel
+        if len(inv) > 0:
+            filename = f"{site}_{inv}"
+        else:
+            filename = site + '_001'
+
+        writer = pd.ExcelWriter(f'{filename}.xlsx', engine='xlsxwriter')
+        box_df.to_excel(writer, 'Sheet1', index=False)
+        bags_df.to_excel(writer, 'Sheet1', startrow = 4, index = False)
+        art_totals.to_excel(writer, 'Sheet1', startcol = 10, startrow = 4, index = False)
+        wb = writer.book
+        ws = writer.sheets['Sheet1']
+        ws.set_column(1, 15, 20)
+        st_format = wb.add_format({
+            'text_wrap': True
+        })
+
+        ws.set_column('A:A', 15, st_format)
+        ws.set_column('B:B', 25, st_format)
+        ws.set_column('C:C', 23, st_format)
+        ws.set_column('D:G', 20, st_format)
+
+        ws.set_column('H:H', 12, st_format) #Count
+        ws.set_column('I:I', 14, st_format) #Weight
+        ws.set_column('J:J', 12, st_format) 
+
+        ws.set_column('K:K', 20, st_format) 
+        ws.set_column('L:L', 12, st_format) 
+        ws.set_column('M:M', 15, st_format) 
+
+        writer.save()
+
+    def export_to_html(self, bag_ls, site, inv, art_tot):
+        pd.set_option('display.max_colwidth', None)
         cat_ls = gf.get_cat_nums(bag_ls)
         for i in range(len(cat_ls)):
             cat_ls[i] += ';'
@@ -401,9 +490,12 @@ class ExportBoxWindow(tk.Tk):
         else:
             filename = f"{site}_001"
 
-        hf.write_html(filename, site, inv, prov_ls, cat_ls)
+        art_ls = art_tot.values.tolist()
+
+        hf.write_html(filename, site, inv, prov_ls, cat_ls, art_ls)
 
     def export_to_pdf(self, bag_ls, site, inv):
+        pd.set_option('display.max_colwidth', None)
 
         file_1 = PdfFile(bag_ls, site, inv)
 
