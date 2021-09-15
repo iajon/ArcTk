@@ -18,7 +18,7 @@ class App(tk.Tk):
         # Theme
         self.tk.call("source", "sun-valley.tcl")
         self.tk.call("set_theme", "light")
-        self.title("ArcTk")
+        self.title("ArcTk v1.0.0")
 
         self.event_manager = EventManager(self)
         self.connection = Connection('database.db')
