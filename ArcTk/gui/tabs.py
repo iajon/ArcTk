@@ -34,7 +34,6 @@ class Home(ttk.Frame):
         self.app.widgets['box_treeview'] = self.box_tree_frame.box_treeview
 
 class ProcessArtifacts(ttk.Frame):
-
     def __init__(self, parent, app):
         super().__init__(parent)
         self.parent = parent

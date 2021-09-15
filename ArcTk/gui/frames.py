@@ -484,41 +484,16 @@ class ArtifactEntry(ttk.LabelFrame):
         # Get data from entries
         data = self.get_data()
 
-        # Check if data is valid
-        invalid = False
-        if data['ARTIFACT_TYPE'] == "" or data['ARTIFACT_TYPE'].isspace():
-            invalid = True
-            print('1')
+        # Send data to card
+        self.em.set("card_preview_frame", side = "back", dataset = data)
 
-        if data['ARTIFACT_COUNT'] == "" or data['ARTIFACT_COUNT'].isspace():
-            pass
-        else:
-            try:
-                int(data['ARTIFACT_COUNT'])
-            except:
-                invalid = True
-                print('2')
+        # Wipe entries
+        self.wipe()
 
-        if data['ARTIFACT_WEIGHT'] == "" or data['ARTIFACT_WEIGHT'].isspace():
-            invalid = True
-            print('3')
-        else:
-            try:
-                float(data['ARTIFACT_WEIGHT'])
-            except:
-                invalid = True
-                print('4')
-        
-        if invalid == False:
-            # Send data to card
-            self.em.set("card_preview_frame", side = "back", dataset = data)
+        # Enable submit button
+        self.em.set("submit_button", enabled = True)
+        pass
 
-            # Wipe entries
-            self.wipe()
-
-            # Enable submit button
-            self.em.set("submit_button", enabled = True)
-        
     def get_data(self):
         artifact_dict = {'ARTIFACT_TYPE':str(self.entry_ls[0].get()),
                         'ARTIFACT_COUNT':str(self.entry_ls[1].get()),
@@ -626,25 +601,19 @@ class CardPreview(ttk.LabelFrame):
         data_ls = temp_data
         prefixes = temp_prefixes
 
-        if len(data_ls) >= 1:
-            temp = []
-            for i, j in zip(data_ls, prefixes):
-                temp.append(self.format_front(i, j))
+        temp = []
+        for i, j in zip(data_ls, prefixes):
+            temp.append(self.format_front(i, j))
 
-            joined = '\n'.join(temp)
+        joined = ''.join(temp)
 
-            self.frontvar.set(site_num + joined)
-        else:
-            self.frontvar.set(f"{site_num}Prov:                   \nCat#:                  \nMisc:                   \nName:                  \nDate:                   ")
+        self.frontvar.set(site_num + joined)
 
     def load_back(self, data):
         self.b_data.append(data)
-        if data['ARTIFACT_COUNT'] == "" or data['ARTIFACT_COUNT'].isspace():
-            self.b_string.append(self.format_back(f"{data['ARTIFACT_TYPE']}: {data['ARTIFACT_WEIGHT']}g"))
-        else:
-            self.b_string.append(self.format_back(f"{data['ARTIFACT_TYPE']}: ({data['ARTIFACT_COUNT']}) {data['ARTIFACT_WEIGHT']}g"))
+        self.b_string.append(self.format_back(f"{data['ARTIFACT_TYPE']}: ({data['ARTIFACT_COUNT']}) {data['ARTIFACT_WEIGHT']}g"))
         
-        self.backvar.set('\n'.join(self.b_string))
+        self.backvar.set(''.join(self.b_string))
 
     def format_front(self, string, prefix):
         line_length = 18
