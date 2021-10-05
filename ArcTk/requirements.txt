@@ -1,0 +1,8 @@
+### ArcTk Requirements ###
+
+fpdf
+natsort
+pandas
+pynput
+xlsxwriter
+
